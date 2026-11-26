@@ -327,7 +327,13 @@ final class StationArt extends View {
         if(minseo) companion(c,1,setting==5?172:309,acting,minseoAction,p);
         if(jian) companion(c,2,164,acting,jianAction,p);
         if(lamp && setting==5){c.save();c.translate(x,y);paint.setColor(0x58ffe1a1);c.drawPath(beam,paint);c.restore();}
-        if(hero) person(c,0,x,y,h,pose,walk,left);
+        if (hero) {
+            c.save();
+            if (counterChoice && acting && action.startsWith("run") && p > .5f)
+                c.clipPath(shutterOpening);
+            person(c,0,x,y,h,pose,walk,left);
+            c.restore();
+        }
         if(atShutter && acting && action.startsWith("run") && p>.5f) shutter(c,drop);
         c.restore();
         if ((acting && p<1) || timing || (departing && elapsed<4100) || (arriving && elapsed<2900))

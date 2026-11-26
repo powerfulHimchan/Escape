@@ -71,7 +71,8 @@ def reach_shutter(right_path=False, inspect_train=False):
         time.sleep(3.8)
         assert art_pixels() != departing, "Station did not change as the train left"
     find("노선도에 없는 역")
-    capture("Platform")
+    if inspect_train:
+        capture("Platform")
     tap("계속")
     # Both scenes use the same two footer buttons. Locate the upper button
     # before the clock starts so a slow accessibility dump cannot consume it.
