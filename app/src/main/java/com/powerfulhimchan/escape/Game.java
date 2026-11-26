@@ -111,7 +111,7 @@ final class Game {
             if (index == 0 && "rescueDark".equals(route) && has("poweredLamp")) {
                 return "손전등으로 길을 비추며 함께 나간다";
             }
-            if (index == 0 && "dawn".equals(route) && !has("poweredRadio") && !ownsBattery()) {
+            if (index == 0 && "dawn".equals(route) && !has("poweredRadio") && (!has("radio") || !ownsBattery())) {
                 return "정류장으로 나가 약속한 소리를 기다린다";
             }
         }
@@ -139,6 +139,8 @@ final class Game {
         JSONObject flags = state.optJSONObject("flags");
         boolean important = finalStep || timeout;
         String motion = timeout ? "hold" : index == 0 ? "left" : "right";
+        if (index == 0 && finalStep && "dawn".equals(ch.optString("key"))
+                && has("radio") && ownsBattery()) effects += ",poweredRadio";
         if ("powerRadio".equals(effects)) {
             if (has("radio") && ownsBattery()) {
                 effects = "poweredRadio,signal";
@@ -218,6 +220,7 @@ final class Game {
         put(record, "route", chapter().optString("name"));
         put(record, "type", ending.optString("type"));
         put(record, "art", ending.optInt("art"));
+        put(record, "setting", ending.optInt("setting"));
         String primary = ending.optString("body");
         if ("dawn".equals(ending.optString("id")) && has("outsideListener")) {
             primary = "도윤은 지상 정류장에서 약속한 시각을 기다렸다. 역 입구가 있던 벽 쪽에서 작은 잡음이 흘러나왔다.";

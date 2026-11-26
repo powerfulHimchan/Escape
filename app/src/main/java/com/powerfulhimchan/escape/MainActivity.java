@@ -5,6 +5,11 @@ import android.app.AlertDialog;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Insets;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
+import android.widget.ImageView;
+import android.widget.GridLayout;
+import android.view.ViewGroup;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
@@ -31,11 +36,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class MainActivity extends Activity {
-    private static final int BACKGROUND = 0xFFEEE7D8;
-    private static final int PAPER = 0xFFFFFAEC;
-    private static final int INK = 0xFF242C37;
-    private static final int NOTE = 0xFF8B4B3A;
-    private static final int BORDER = 0xFFD6C7AF;
+    private static final int BACKGROUND = 0xFFE5CFAE;
+    private static final int PAPER = 0xFFF6EAD5;
+    private static final int INK = 0xFF402E25;
+    private static final int NOTE = 0xFF963F2D;
+    private static final int BORDER = 0xFFA47D64;
     private static final String SAVE = "story.save";
     private static final String ARCHIVE = "story.archive";
 
@@ -53,6 +58,10 @@ public final class MainActivity extends Activity {
     private int lastTickSecond = -1;
     private AlertDialog dialog;
 
+    private Typeface regularFont;
+    private Typeface boldFont;
+    private TextView brand;
+    private View seam;
     private Button inventory;
     private Button collection;
     private StationArt art;
@@ -69,6 +78,8 @@ public final class MainActivity extends Activity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        regularFont = Typeface.createFromAsset(getAssets(), "fonts/noto_sans_kr_regular.ttf");
+        boldFont = Typeface.createFromAsset(getAssets(), "fonts/noto_sans_kr_bold.ttf");
         preferences = getSharedPreferences("escape", MODE_PRIVATE);
         try {
             story = new Story(this);
@@ -144,7 +155,8 @@ public final class MainActivity extends Activity {
         text.setText(value);
         text.setTextSize(size);
         text.setTextColor(INK);
-        text.setTypeface(Typeface.DEFAULT, bold ? Typeface.BOLD : Typeface.NORMAL);
+        text.setTypeface(bold ? boldFont : regularFont);
+        text.setIncludeFontPadding(false);
         return text;
     }
 
@@ -156,19 +168,35 @@ public final class MainActivity extends Activity {
         return box;
     }
 
+    private RippleDrawable paperButton(int fill, boolean stripe) {
+        GradientDrawable surface = paper(fill, BORDER, 3);
+        if (!stripe) {
+            return new RippleDrawable(ColorStateList.valueOf(0x25963F2D), surface, null);
+        }
+        GradientDrawable edge = new GradientDrawable();
+        float radius = dp(3);
+        edge.setCornerRadii(new float[]{radius, radius, 0, 0, 0, 0, radius, radius});
+        edge.setColor(NOTE);
+        LayerDrawable layers = new LayerDrawable(new Drawable[]{surface, edge});
+        layers.setLayerWidth(1, dp(5));
+        layers.setLayerGravity(1, Gravity.START | Gravity.FILL_VERTICAL);
+        return new RippleDrawable(ColorStateList.valueOf(0x25963F2D), layers, null);
+    }
+
     private Button button(float size, boolean compact) {
         Button button = new Button(this);
         button.setAllCaps(false);
         button.setTextSize(size);
+        button.setTypeface(boldFont);
+        button.setIncludeFontPadding(false);
         button.setTextColor(INK);
         button.setMinWidth(0);
         button.setMinimumWidth(0);
-        button.setMinHeight(dp(compact ? 44 : 52));
-        button.setMinimumHeight(dp(compact ? 44 : 52));
-        button.setPadding(dp(compact ? 10 : 15), dp(6), dp(compact ? 10 : 15), dp(7));
+        button.setMinHeight(dp(compact ? 48 : 54));
+        button.setMinimumHeight(dp(compact ? 48 : 54));
+        button.setPadding(dp(compact ? 10 : 16), dp(8), dp(compact ? 10 : 16), dp(8));
         button.setGravity(compact ? Gravity.CENTER : Gravity.CENTER_VERTICAL | Gravity.START);
-        button.setBackground(new RippleDrawable(ColorStateList.valueOf(0x338B4B3A),
-                paper(compact ? BACKGROUND : PAPER, BORDER, 8), null));
+        button.setBackground(paperButton(compact ? 0xFFEEDBC0 : 0xFFF9ECD7, !compact));
         return button;
     }
 
@@ -205,69 +233,87 @@ public final class MainActivity extends Activity {
         outer.requestApplyInsets();
 
         LinearLayout layout = column();
-        layout.setPadding(dp(14), 0, dp(14), 0);
-        int width = Math.min(getResources().getDisplayMetrics().widthPixels, dp(620));
+        layout.setPadding(dp(16), 0, dp(16), 0);
+        int width = Math.min(getResources().getDisplayMetrics().widthPixels, dp(600));
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(width, -1, Gravity.CENTER_HORIZONTAL);
         outer.addView(layout, layoutParams);
 
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        TextView brand = label("막차가 떠난 뒤", 20, true);
+        brand = label("막차가 떠난 뒤", 25, true);
         brand.setGravity(Gravity.CENTER_VERTICAL);
         brand.setMinHeight(dp(48));
         brand.setContentDescription("막차가 떠난 뒤, 제목 화면");
         brand.setOnClickListener(v -> goHome());
         header.addView(brand, new LinearLayout.LayoutParams(0, -2, 1));
-        collection = button(13, true);
+        collection = button(14, true);
         collection.setText("엔딩");
         collection.setOnClickListener(v -> showArchive());
         header.addView(collection, new LinearLayout.LayoutParams(-2, -2));
-        inventory = button(13, true);
+        inventory = button(14, true);
         inventory.setText("소지품");
         inventory.setOnClickListener(v -> showInventory());
         LinearLayout.LayoutParams inventoryParams = new LinearLayout.LayoutParams(-2, -2);
         inventoryParams.setMarginStart(dp(6));
         header.addView(inventory, inventoryParams);
-        add(layout, header, 4);
+        add(layout, header, 10);
 
         scroll = new ScrollView(this);
         scroll.setFillViewport(true);
         scroll.setClipToPadding(false);
         layout.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         LinearLayout contents = column();
-        contents.setPadding(dp(2), dp(9), dp(2), dp(7));
+        contents.setPadding(0, 0, 0, dp(12));
         scroll.addView(contents, new ScrollView.LayoutParams(-1, -2));
 
         FrameLayout picture = new FrameLayout(this);
-        picture.setBackground(paper(PAPER, BORDER, 7));
+        picture.setBackground(paper(PAPER, BORDER, 3));
         picture.setPadding(dp(5), dp(5), dp(5), dp(5));
-        picture.setElevation(dp(1.5f));
+        picture.setElevation(dp(2));
+        picture.setRotation(-1.2f);
         art = new StationArt(this);
-        int pictureHeight = Math.min(dp(227), Math.round((width - dp(42)) * 170f / 288));
+        int pictureHeight = (width - dp(48)) / 2;
         picture.addView(art, new FrameLayout.LayoutParams(-1, pictureHeight));
-        add(contents, picture, 0);
+        LinearLayout.LayoutParams photo = new LinearLayout.LayoutParams(-1, -2);
+        photo.setMargins(dp(3), dp(14), dp(3), 0);
+        contents.addView(picture, photo);
 
         LinearLayout card = column();
-        card.setPadding(dp(15), dp(12), dp(15), dp(16));
-        card.setBackground(paper(PAPER, BORDER, 8));
-        card.setElevation(dp(1));
+        card.setPadding(dp(22), dp(12), dp(14), dp(14));
         chapter = label("", 13, true);
         chapter.setTextColor(NOTE);
         add(card, chapter, 0);
-        title = label("", 25, true);
+        title = label("", 24, true);
         if (Build.VERSION.SDK_INT >= 28) title.setAccessibilityHeading(true);
         add(card, title, 4);
-        body = label("", 17, false);
-        body.setLineSpacing(dp(5), 1f);
+        body = label("", 18, false);
+        body.setLineSpacing(dp(6), 1f);
         add(card, body, 10);
         note = label("", 14, false);
         note.setTextColor(NOTE);
         note.setLineSpacing(dp(4), 1f);
         add(card, note, 12);
-        add(contents, card, 11);
+        FrameLayout page = new FrameLayout(this);
+        page.setBackground(paper(PAPER, BORDER, 3));
+        page.setElevation(dp(2));
+        page.addView(card, new FrameLayout.LayoutParams(-1, -2));
+        seam = new View(this);
+        GradientDrawable stitching = new GradientDrawable();
+        stitching.setStroke(dp(1), BORDER, dp(2), dp(2));
+        seam.setBackground(stitching);
+        FrameLayout.LayoutParams seamPosition = new FrameLayout.LayoutParams(dp(1), -1, Gravity.START);
+        seamPosition.setMargins(dp(10), dp(12), 0, dp(12));
+        page.addView(seam, seamPosition);
+        ImageView bookmark = new ImageView(this);
+        bookmark.setImageResource(R.drawable.journal_bookmark);
+        bookmark.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        FrameLayout.LayoutParams tab = new FrameLayout.LayoutParams(dp(14), dp(23), Gravity.TOP | Gravity.END);
+        tab.setMarginEnd(dp(17));
+        page.addView(bookmark, tab);
+        add(contents, page, 14);
 
         LinearLayout footer = column();
-        footer.setPadding(dp(2), 0, dp(2), dp(8));
+        footer.setPadding(0, dp(4), 0, dp(10));
         timerText = label("", 13, true);
         timerText.setTextColor(NOTE);
         timerText.setGravity(Gravity.END);
@@ -280,8 +326,8 @@ public final class MainActivity extends Activity {
         footer.addView(timerBar, new LinearLayout.LayoutParams(-1, dp(6)));
         left = button(16, false);
         right = button(16, false);
-        add(footer, left, 5);
-        add(footer, right, 6);
+        add(footer, left, 0);
+        add(footer, right, 8);
         add(layout, footer, 0);
     }
 
@@ -302,6 +348,12 @@ public final class MainActivity extends Activity {
     }
 
     private void showText(String phase, String heading, String text, String details) {
+        brand.setVisibility(home ? View.INVISIBLE : View.VISIBLE);
+        seam.setVisibility(home ? View.GONE : View.VISIBLE);
+        title.setTextSize(home ? 30 : 24);
+        title.setGravity(home ? Gravity.CENTER : Gravity.START);
+        body.setGravity(home ? Gravity.CENTER : Gravity.START);
+        chapter.setVisibility(home ? View.GONE : View.VISIBLE);
         chapter.setText(phase);
         title.setText(heading);
         body.setText(text);
@@ -316,7 +368,7 @@ public final class MainActivity extends Activity {
         collection.setContentDescription("엔딩 모아보기");
         inventory.setVisibility(home ? View.GONE : View.VISIBLE);
         if (home) {
-            art.configure(9, 1, false, false, false);
+            art.configure(0, false, false, false, false, false, true);
             showText("선택형 탈출 이야기", getString(R.string.app_name),
                     "00:11. 막차가 노선도에 없는 역에 멈췄다.\n\n"
                             + "셔터가 내려오기 시작했다. 어떤 걸 챙기고, 어느 쪽으로 달릴까?", "");
@@ -335,12 +387,18 @@ public final class MainActivity extends Activity {
         JSONObject current = game.chapter();
         int currentAct = game.act();
         String phase = currentAct + "막 · " + Story.ACT_TITLES[currentAct - 1];
-        int location = current.optInt("art");
-        if (currentAct == 1 && game.step() >= 1) location = 9;
-        boolean third = "rider".equals(current.optString("key"))
-                || "gather".equals(current.optString("key"))
-                || "retrieve".equals(current.optString("key"));
-        art.configure(location, currentAct, third, game.has("radio"), game.has("poweredLamp"));
+        String route = current.optString("key");
+        boolean intro = "intro".equals(game.page());
+        int scene = intro ? current.optInt("setting") : game.beat().optInt("setting");
+        boolean closeUp = "link".equals(game.page()) || scene == 1 || route.equals("hall") && game.step() == 0;
+        boolean nearby = currentAct >= 3 && !route.equals("trainSolo") && !route.equals("change")
+                && !route.equals("retrieve") && !route.equals("partial") && !route.equals("climb")
+                && !route.equals("correct") && !(route.equals("oldstairs") && game.step() > 0)
+                && !(route.equals("voice") && game.step() == 0) && !(route.equals("records") && intro);
+        boolean rider = route.equals("gather") || route.equals("retrieve")
+                || route.equals("rider") && game.step() > 0;
+        art.configure(scene, closeUp, nearby, rider, scene == 1 && !game.has("radio"),
+                game.has("poweredLamp"), true);
         switch (game.page()) {
             case "intro":
                 showText(phase, current.optString("name"), current.optString("opening"), "");
@@ -372,8 +430,6 @@ public final class MainActivity extends Activity {
         JSONObject beat = game.beat();
         int seconds = beat.optInt("seconds");
         String details = game.timerClue();
-        boolean covered = seconds > 0 && !game.state.has("timeLeft");
-        if (covered) details = "선택지를 열면 " + seconds + "초 안에 골라야 합니다.";
         String text = beat.optString("body");
         if ("power".equals(beat.optString("mode"))) {
             if (game.has("poweredRadio") || game.has("poweredLamp")) {
@@ -383,18 +439,13 @@ public final class MainActivity extends Activity {
             }
         }
         showText(phase, beat.optString("title"), withLast(text), details);
-        if (covered) {
-            bind(left, "시간 제한 선택 열기", () -> {
-                Game.put(game.state, "timeLeft", seconds * 1000L);
-                save();
-                render();
-            });
-            bind(right, "", null);
-            return;
-        }
         bind(left, game.choiceLabel(0), () -> select(0));
         bind(right, game.choiceLabel(1), () -> select(1));
         if (seconds > 0) {
+            if (!game.state.has("timeLeft")) {
+                Game.put(game.state, "timeLeft", seconds * 1000L);
+                save();
+            }
             timerText.setVisibility(View.VISIBLE);
             timerBar.setVisibility(View.VISIBLE);
             displayClock(game.state.optLong("timeLeft"), seconds * 1000L);
@@ -503,34 +554,76 @@ public final class MainActivity extends Activity {
             startClock();
         });
         dialog.show();
+        styleDialog(dialog.getWindow().getDecorView());
+    }
+
+    private void styleDialog(View view) {
+        if (view instanceof TextView) {
+            TextView text = (TextView) view;
+            boolean bold = view instanceof Button || text.getTypeface() != null && text.getTypeface().isBold();
+            text.setTypeface(bold ? boldFont : regularFont);
+        }
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i=0; i<group.getChildCount(); i++) styleDialog(group.getChildAt(i));
+        }
     }
 
     private void showInventory() {
         LinearLayout list = column();
         list.setPadding(dp(22), dp(4), dp(22), dp(15));
-        addItem(list, "무전기", "radio",
-                game.has("poweredRadio") ? "전원이 들어온 상태. 떨어져 있는 상대에게 신호나 새 위치를 전한다."
-                        : "건전지를 넣으면 떨어져 있는 상대에게 신호를 보낼 수 있다.");
-        String charge = game.has("poweredRadio") ? "무전기에 장착됨"
-                : game.has("poweredLamp") ? "손전등에 장착됨" : "장비 한 곳에 쓸 수 있는 남은 전원.";
-        addItem(list, "건전지", "battery", charge);
-        addItem(list, "손전등", "lamp",
-                game.has("poweredLamp") ? "전원이 들어온 상태. 정전 통로의 표식과 상대를 비출 수 있다."
-                        : "건전지를 넣으면 정전된 통로를 비추거나 불빛으로 신호를 보낼 수 있다.");
-        addItem(list, "역 안내도", "map",
-                game.has("mark") ? "갈림길의 표식이 추가됐다. 다음 반복에서도 표시가 남는다."
-                        : "예전 출구와 통로가 그려져 있다. 현재 역의 구조와 비교해 볼 수 있다.");
+        String[] keys = {"radio","battery","lamp","map"};
+        String[] names = {"무전기","건전지","손전등","역 안내도"};
+        String[] details = {
+                game.has("poweredRadio") ? "전원이 들어와 있다. 떨어진 곳에 신호를 보낼 수 있다." : "사용하려면 건전지가 필요하다.",
+                game.has("poweredLamp") ? "손전등에 장착했다." : game.has("poweredRadio") ? "무전기에 장착했다." : "장비 하나에 넣을 수 있다.",
+                game.has("poweredLamp") ? "정전 통로에서 불빛으로 신호를 보낼 수 있다." : "건전지를 넣으면 어두운 통로를 비춘다.",
+                game.has("mark") ? "갈림길에 직접 남긴 표시가 있다." : "옛 출구와 통로를 확인할 수 있다."
+        };
+        int[] icons = {R.drawable.item_radio,R.drawable.item_battery,R.drawable.item_lamp,R.drawable.item_map};
+        GridLayout slots = new GridLayout(this);
+        slots.setColumnCount(8);
+        slots.setRowCount(8);
+        add(list, slots, 0);
+        TextView selected = label("",17,true);
+        TextView description = label("아직 소지품이 없다.",15,false);
+        add(list, selected, 10);
+        add(list, description, 6);
+        int nextItem = 0;
+        for (int cell=0; cell<64; cell++) {
+            while (nextItem<keys.length && !game.has(keys[nextItem])) nextItem++;
+            View slot;
+            boolean filled = nextItem<keys.length;
+            if (filled) {
+                int index = nextItem++;
+                ImageView icon = new ImageView(this);
+                icon.setImageResource(icons[index]);
+                icon.setPadding(dp(4),dp(4),dp(4),dp(4));
+                icon.setContentDescription(names[index]);
+                icon.setOnClickListener(v -> {
+                    selected.setText(names[index]);
+                    description.setText(details[index]);
+                });
+                description.setText("아이콘을 누르면 설명을 볼 수 있어.");
+                slot = icon;
+            } else {
+                slot = new View(this);
+                slot.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            }
+            slot.setBackground(paper(filled ? 0xFFF9ECD7 : 0xFFF0DFC3,filled ? BORDER : 0x55A47D64,3));
+            GridLayout.LayoutParams pos = new GridLayout.LayoutParams(
+                    GridLayout.spec(cell/8), GridLayout.spec(cell%8,1,1f));
+            pos.width = 0;
+            pos.height = dp(28);
+            pos.setMargins(dp(2),dp(2),dp(2),dp(2));
+            slots.addView(slot,pos);
+        }
         ScrollView listScroll = new ScrollView(this);
         listScroll.addView(list);
         present(new AlertDialog.Builder(this).setTitle("소지품").setView(listScroll)
                 .setPositiveButton("닫기", null));
     }
 
-    private void addItem(LinearLayout list, String name, String key, String description) {
-        TextView heading = label(name + (game.has(key) ? "" : "  ·  미획득"), 17, true);
-        add(list, heading, 11);
-        if (game.has(key)) add(list, label(description, 14, false), 3);
-    }
 
     private void archiveEnding(JSONObject record) {
         String id = record.optString("id");
@@ -564,7 +657,10 @@ public final class MainActivity extends Activity {
     private void showEnding(JSONObject ending) {
         String category = ending.optString("type");
         boolean three = "three".equals(ending.optString("id"));
-        art.configure(ending.optInt("art"), 5, three, game.has("radio"), game.has("poweredLamp"));
+        String outcome = ending.optString("id");
+        boolean together = three || outcome.equals("together") || outcome.equals("broadcast")
+                || outcome.equals("safe") || outcome.equals("train") && game.has("aboardTogether");
+        art.configure(ending.optInt("setting"), false, together, three, false, game.has("poweredLamp"), true);
         showText("엔딩" + ("기존".equals(category) ? "" : " · " + category),
                 ending.optString("title"), endingBody(ending), "");
         bind(left, "원하는 막부터 다시 보기", this::chooseAct);
