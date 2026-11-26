@@ -28,7 +28,7 @@ final class StationArt extends View {
     private int setting;
     private int panel;
     private boolean close, minseo, jian, radio, lamp, hero;
-    private boolean departing, arriving, emptyPlatform, atShutter, callLight;
+    private boolean departing, arriving, emptyPlatform, atShutter, counterChoice, timedScene, callLight;
     private long entered, started = -1;
     private float closed, closedAtChoice;
     private boolean timing;
@@ -69,16 +69,18 @@ final class StationArt extends View {
         hero = showHero;
         entered = SystemClock.uptimeMillis();
         started = -1;
-        departing = arriving = emptyPlatform = atShutter = callLight = false;
+        departing = arriving = emptyPlatform = atShutter = counterChoice = timedScene = callLight = false;
         invalidate();
     }
 
-    void stage(boolean departure, boolean arrival, boolean empty, boolean shutter, boolean calling, int journalPanel) {
+    void stage(boolean departure, boolean arrival, boolean empty, boolean timed, boolean firstShutter, boolean calling, int journalPanel) {
         panel = journalPanel;
         departing = departure;
         arriving = arrival;
         emptyPlatform = empty;
-        atShutter = shutter;
+        timedScene = timed;
+        atShutter = timed && setting == 1;
+        counterChoice = firstShutter;
         callLight = calling;
     }
 
@@ -183,6 +185,44 @@ final class StationArt extends View {
         }
     }
 
+    private void timedFixture(Canvas c) {
+        if (setting == 7) {
+            // Glass leaves slide across the open street entrance. The street remains visible through them.
+            float width = 153 * closed;
+            paint.setColor(0x406a8290);
+            c.drawRect(269,29,269+width,182,paint);
+            prop(c,0xff3a3a40,267+width,29,3,153);
+            prop(c,0xff5b5350,268,114,Math.round(width),3);
+        } else if (setting == 6 || setting == 11) {
+            boolean interior = setting == 6;
+            int x = interior ? 1 : 275, y = interior ? 39 : 72;
+            int w = interior ? 101 : 40, h = interior ? 213 : 105;
+            float gap = (interior ? closed : 1-closed) * w * .28f;
+            int tileX=(setting%3)*512, tileY=(setting/3)*256;
+            c.save();
+            c.clipRect(x,y,x+w,y+h);
+            bitmap(c,details,interior ? 58 : 16,interior ? 133 : 24,85,73,x,y,w,h);
+            bitmap(c,details,tileX+x,tileY+y,w/2,h,x-gap,y,w/2,h);
+            bitmap(c,details,tileX+x+w/2,tileY+y,w-w/2,h,x+w/2+gap,y,w-w/2,h);
+            c.restore();
+        } else if (setting == 4) {
+            // The shutter on the other side cuts off the view through the glass.
+            c.save();
+            c.clipPath(glass);
+            c.translate(0,-224*(1-closed));
+            paint.setColor(0xa5484650);
+            c.drawRect(48,-84,370,230,paint);
+            paint.setColor(0x80545259);
+            for (int y=-85;y<=230;y+=8) c.drawLine(48,y,370,y-90,paint);
+            c.restore();
+        } else if (setting==2 || setting==3 || setting==5 || setting==8 || setting==10) {
+            int alpha = (int)(closed * (65+23*Math.cos(closed*30)));
+            c.drawColor((alpha<<24) | 0x000a0e21);
+        }
+    }
+
+    private final Path glass = polygon(53,1,366,48,366,143,53,251);
+
     private void prop(Canvas c, int color, float x, float y, int w, int h) {
         paint.setColor(color);
         c.drawRect(x,y,x+w,y+h,paint);
@@ -226,6 +266,7 @@ final class StationArt extends View {
         room(c);
         fixtures(c, now, p);
         if(departing || arriving) train(c,elapsed);
+        if(timedScene && !atShutter && !emptyPlatform) timedFixture(c);
         if(callLight || atShutter) {
             boolean on=((int)elapsed/460)%2==0;
             if(atShutter) prop(c,on?0xffff6635:0xffad301f,312,48,7,10);
@@ -263,7 +304,7 @@ final class StationArt extends View {
             if(action.equals("signal") || action.equals("reach") || action.equals("hold")) {destX=x;destY=y;}
             if(panel==0) {destX=left?130:393;destY=left?189:151;}
             if(panel==2) {left=action.equals("pick"); destX=left?160:307;destY=185;if(p>.62f)pose="reach";}
-            if(atShutter) {
+            if(counterChoice) {
                 if(action.equals("pick")) {destX=397;destY=172; if(p>.65f)pose="reach";}
                 else if(action.startsWith("run")){destX=155;destY=144;h-=17*ease(p/.65f);}
                 else {destX=322;destY=194;pose="backstep";}

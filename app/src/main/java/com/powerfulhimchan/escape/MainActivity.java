@@ -401,6 +401,8 @@ public final class MainActivity extends Activity {
         boolean choice = game.page().equals("choice");
         int step = game.step();
         boolean timedShutter = start && choice && step == 1;
+        boolean timed = choice && game.beat().optInt("seconds") > 0;
+        if (timed) closeUp = true;
         int panel = -1;
         if (start && !intro) {
             if (choice && step == 0) panel = 0;
@@ -411,7 +413,7 @@ public final class MainActivity extends Activity {
         art.configure(scene, closeUp, nearby, rider, timedShutter && !game.has("radio"),
                 game.has("poweredLamp"), true);
         art.stage(start && intro, route.equals("train") && intro,
-                currentAct < 4 && scene == 0, timedShutter, panel == 3 || scene == 2, panel);
+                currentAct < 4 && scene == 0, timed, timedShutter, panel == 3 || scene == 2, panel);
         switch (game.page()) {
             case "intro":
                 String opening = current.optString("opening");
