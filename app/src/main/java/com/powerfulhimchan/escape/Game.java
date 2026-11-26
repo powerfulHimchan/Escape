@@ -1,0 +1,265 @@
+package com.powerfulhimchan.escape;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+final class Game {
+    private static final String[] TURN_SIGNALS = {
+            "radio", "poweredRadio", "poweredLamp", "map", "mark", "proofPlace",
+            "proofTime", "promise", "trust", "code", "warned", "riderHelp", "signal", "detour"
+    };
+
+    JSONObject state;
+    JSONArray checkpoints;
+    private final Story story;
+
+    Game(Story story, String saved) {
+        this.story = story;
+        try {
+            JSONObject root = new JSONObject(saved);
+            state = root.getJSONObject("state");
+            checkpoints = root.getJSONArray("checkpoints");
+        } catch (JSONException | RuntimeException invalidSave) {
+            restart();
+        }
+    }
+
+    void restart() {
+        state = new JSONObject();
+        checkpoints = new JSONArray();
+        put(state, "act", 1);
+        put(state, "branch", 0);
+        put(state, "step", 0);
+        put(state, "page", "intro");
+        put(state, "flags", new JSONObject());
+        put(state, "log", new JSONArray());
+        checkpoint();
+    }
+
+    static void put(JSONObject object, String key, Object value) {
+        try {
+            object.put(key, value);
+        } catch (JSONException error) {
+            throw new IllegalStateException(key, error);
+        }
+    }
+
+    private static JSONObject copy(JSONObject object) {
+        try {
+            return new JSONObject(object.toString());
+        } catch (JSONException error) {
+            throw new IllegalStateException(error);
+        }
+    }
+
+    String serialize() {
+        JSONObject root = new JSONObject();
+        put(root, "state", state);
+        put(root, "checkpoints", checkpoints);
+        return root.toString();
+    }
+
+    int act() { return state.optInt("act", 1); }
+    int step() { return state.optInt("step"); }
+    String page() { return state.optString("page"); }
+    JSONObject chapter() { return story.chapter(act(), state.optInt("branch")); }
+    JSONObject beat() { return Story.beat(chapter(), step()); }
+    String last() { return state.optString("last"); }
+    boolean has(String key) { return state.optJSONObject("flags").optBoolean(key); }
+    private boolean ownsBattery() { return has("battery") && !has("poweredRadio") && !has("poweredLamp"); }
+
+    void continueScene() {
+        if ("intro".equals(page()) || "link".equals(page())) {
+            put(state, "page", "choice");
+        }
+    }
+
+    private void checkpoint() {
+        try {
+            checkpoints.put(act() - 1, copy(state));
+        } catch (JSONException error) {
+            throw new IllegalStateException(error);
+        }
+    }
+
+    boolean replay(int act) {
+        JSONObject snapshot = checkpoints.optJSONObject(act - 1);
+        if (snapshot == null) return false;
+        state = copy(snapshot);
+        for (int i = checkpoints.length() - 1; i >= act; i--) checkpoints.remove(i);
+        return true;
+    }
+
+    String choiceLabel(int index) {
+        JSONObject beat = beat();
+        JSONObject option = Story.option(beat, index);
+        if ("power".equals(beat.optString("mode"))) {
+            if (index == 0 && (!has("radio") || !ownsBattery())) {
+                return has("poweredRadio") ? "무전기의 신호를 확인한다" : "고정 호출기의 위치를 확인한다";
+            }
+            if (index == 1 && (!has("lamp") || !ownsBattery())) {
+                return has("poweredLamp") ? "손전등으로 모퉁이를 비춘다" : "비상등 아래에서 방향을 기억한다";
+            }
+        }
+        String label = option.optString("label");
+        String route = chapter().optString("key");
+        if (act() == 5 && step() == 8) {
+            if (index == 0 && "change".equals(route) && has("poweredRadio")) {
+                return "무전기로 바뀐 합류 지점을 전한다";
+            }
+            if (index == 0 && "rescueDark".equals(route) && has("poweredLamp")) {
+                return "손전등으로 길을 비추며 함께 나간다";
+            }
+            if (index == 0 && "dawn".equals(route) && !has("poweredRadio") && !ownsBattery()) {
+                return "정류장으로 나가 약속한 소리를 기다린다";
+            }
+        }
+        return label;
+    }
+
+    String timerClue() {
+        if (act() == 5 && step() == 8 && "streetProof".equals(chapter().optString("key"))
+                && (!has("proofPlace") || !has("proofTime"))) {
+            return "기록에 장소나 시각이 빠져 있다. 출구를 건너면 지금 가진 자료만 보여줄 수 있다.";
+        }
+        return "";
+    }
+
+    String select(int index) {
+        JSONObject ch = chapter();
+        JSONObject beat = beat();
+        boolean timeout = index < 0;
+        int currentAct = act();
+        boolean finalStep = step() == Story.LENGTHS[currentAct - 1] - 1;
+        JSONObject option = timeout ? null : Story.option(beat, index);
+        String label = timeout ? "시간 안에 고르지 못함" : choiceLabel(index);
+        String aftermath = timeout ? beat.optString("timeout") : option.optString("after");
+        String effects = timeout ? beat.optString("timeoutEffect") : option.optString("effect");
+        JSONObject flags = state.optJSONObject("flags");
+        boolean important = finalStep || timeout;
+        String motion = timeout ? "hold" : index == 0 ? "left" : "right";
+        if ("powerRadio".equals(effects)) {
+            if (has("radio") && ownsBattery()) {
+                effects = "poweredRadio,signal";
+            } else {
+                effects = "signal";
+                aftermath = has("poweredRadio") ? "작은 표시등이 깜박인다. 도윤은 같은 신호를 알아볼 수 있다."
+                        : "고정 호출기의 위치를 기억해 두었다.";
+            }
+        } else if ("powerLamp".equals(effects)) {
+            if (has("lamp") && ownsBattery()) {
+                effects = "poweredLamp,darkRoute";
+            } else {
+                effects = "darkRoute";
+                aftermath = has("poweredLamp") ? "켜고 끄는 불빛으로 벽의 꺾이는 부분을 확인했다."
+                        : "비상등 아래에서 다음 모퉁이에 이르는 방향을 기억했다.";
+            }
+        }
+        for (String name : effects.split(",")) {
+            if (name.isEmpty()) continue;
+            if ("run".equals(name) || "pick".equals(name)) {
+                motion = "run".equals(name) ? (index == 1 ? "runRight" : "runLeft") : name;
+                continue;
+            }
+            if (has(name)) continue;
+            put(flags, name, true);
+            for (String signal : TURN_SIGNALS) {
+                if (signal.equals(name)) important = true;
+            }
+        }
+
+        JSONObject entry = new JSONObject();
+        put(entry, "act", currentAct);
+        put(entry, "label", label);
+        put(entry, "after", aftermath);
+        put(entry, "important", important);
+        put(entry, "fork", finalStep);
+        put(entry, "effect", effects);
+        state.optJSONArray("log").put(entry);
+        put(state, "last", aftermath);
+        state.remove("timeLeft");
+        if (!finalStep) {
+            put(state, "step", step() + 1);
+            if (step() == 4) put(state, "page", "link");
+        } else if (currentAct < 5) {
+            put(state, "branch", state.optInt("branch") * 2 + index);
+            put(state, "act", currentAct + 1);
+            put(state, "step", 0);
+            put(state, "page", "intro");
+            checkpoint();
+        } else {
+            String ending = ch.optJSONArray("ends").optString(index);
+            String route = ch.optString("key");
+            if (index == 0 && "change".equals(route) && has("poweredRadio")) {
+                ending = "together";
+                aftermath = "민서는 무전으로 새 갈림길을 듣고 달려왔다. 둘은 같은 문을 건넜다.";
+                put(entry, "after", aftermath);
+            } else if (index == 0 && "streetProof".equals(route)
+                    && (!has("proofPlace") || !has("proofTime"))) {
+                ending = "receipt";
+                aftermath = "두 사람은 지상에 나왔지만, 밖에서 확인할 수 있는 항목이 기록에 빠져 있었다.";
+                put(entry, "after", aftermath);
+            } else if ("dawn".equals(ending) && !has("poweredRadio") && (!has("radio") || !ownsBattery())) {
+                put(flags, "outsideListener", true);
+            }
+            put(state, "last", aftermath);
+            put(state, "ending", ending);
+            put(state, "page", "ending");
+        }
+        return motion;
+    }
+
+    JSONObject endingRecord() {
+        JSONObject ending = story.endings.get(state.optString("ending"));
+        JSONObject record = new JSONObject();
+        put(record, "id", ending.optString("id"));
+        put(record, "title", ending.optString("title"));
+        put(record, "route", chapter().optString("name"));
+        put(record, "type", ending.optString("type"));
+        put(record, "art", ending.optInt("art"));
+        String primary = ending.optString("body");
+        if ("dawn".equals(ending.optString("id")) && has("outsideListener")) {
+            primary = "도윤은 지상 정류장에서 약속한 시각을 기다렸다. 역 입구가 있던 벽 쪽에서 작은 잡음이 흘러나왔다.";
+        }
+        JSONArray variants = ending.optJSONArray("alt");
+        String epilogue = "";
+        String variant = "default";
+        for (int i = 0; i < variants.length(); i++) {
+            JSONArray option = variants.optJSONArray(i);
+            if (has(option.optString(0)) || "default".equals(option.optString(0))) {
+                variant = option.optString(0);
+                epilogue = option.optString(1);
+                break;
+            }
+        }
+        put(record, "variant", variant);
+        put(record, "body", last() + "\n\n" + primary + "\n\n" + epilogue);
+        JSONArray log = state.optJSONArray("log");
+        JSONArray influences = new JSONArray();
+        JSONObject lastChoice = log.optJSONObject(log.length() - 1);
+        JSONObject earlier = null;
+        for (int i = log.length() - 2; i >= 0; i--) {
+            JSONObject entry = log.optJSONObject(i);
+            if (earlier == null && entry.optBoolean("fork")) {
+                earlier = entry;
+            }
+        }
+        if (earlier != null) influences.put(earlier);
+        String fact = "default".equals(variant) ? "power" : variant;
+        JSONObject contributingChoice = null;
+        for (int i = log.length() - 2; i >= 0; i--) {
+            JSONObject entry = log.optJSONObject(i);
+            if (entry == earlier || entry.optBoolean("fork")) continue;
+            if (entry.optString("effect").contains(fact)) {
+                contributingChoice = entry;
+                break;
+            }
+            if (contributingChoice == null && entry.optBoolean("important")) contributingChoice = entry;
+        }
+        if (contributingChoice != null) influences.put(contributingChoice);
+        if (lastChoice != null) influences.put(lastChoice);
+        put(record, "influences", influences);
+        return record;
+    }
+}
