@@ -430,8 +430,6 @@ public final class MainActivity extends Activity {
         JSONObject beat = game.beat();
         int seconds = beat.optInt("seconds");
         String details = game.timerClue();
-        boolean covered = seconds > 0 && !game.state.has("timeLeft");
-        if (covered) details = "선택지를 열면 " + seconds + "초 안에 골라야 합니다.";
         String text = beat.optString("body");
         if ("power".equals(beat.optString("mode"))) {
             if (game.has("poweredRadio") || game.has("poweredLamp")) {
@@ -441,18 +439,13 @@ public final class MainActivity extends Activity {
             }
         }
         showText(phase, beat.optString("title"), withLast(text), details);
-        if (covered) {
-            bind(left, "시간 제한 선택 열기", () -> {
-                Game.put(game.state, "timeLeft", seconds * 1000L);
-                save();
-                render();
-            });
-            bind(right, "", null);
-            return;
-        }
         bind(left, game.choiceLabel(0), () -> select(0));
         bind(right, game.choiceLabel(1), () -> select(1));
         if (seconds > 0) {
+            if (!game.state.has("timeLeft")) {
+                Game.put(game.state, "timeLeft", seconds * 1000L);
+                save();
+            }
             timerText.setVisibility(View.VISIBLE);
             timerBar.setVisibility(View.VISIBLE);
             displayClock(game.state.optLong("timeLeft"), seconds * 1000L);
