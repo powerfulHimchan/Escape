@@ -25,6 +25,7 @@ final class StationArt extends View {
     private final Path trainBay = polygon(33,101,267,6,325,31,325,135,115,215,33,194);
     private final Path beam = polygon(8,-30,94,-27,58,-5);
     private String action = "hold";
+    private String minseoAction = "hold", jianAction = "hold";
     private int setting;
     private int panel;
     private boolean close, minseo, jian, radio, lamp, hero;
@@ -90,7 +91,9 @@ final class StationArt extends View {
         invalidate();
     }
 
-    void play(String motion) {
+    void play(String motion, String companion, String rider) {
+        minseoAction = companion;
+        jianAction = rider;
         action = motion;
         closedAtChoice = closed;
         started = SystemClock.uptimeMillis();
@@ -255,6 +258,15 @@ final class StationArt extends View {
         c.restore();
     }
 
+    private void companion(Canvas c, int who, float x, boolean acting, String cue, float p) {
+        String pose = acting ? cue : "hold";
+        boolean left = pose.endsWith("Left");
+        boolean travels = pose.startsWith("run") || pose.startsWith("away") || pose.equals("backstep");
+        float along = travels ? ease((p-.08f*who)/(1-.08f*who)) : 0;
+        float dx = pose.equals("backstep") ? -18 : left ? -35 : 35;
+        person(c,who,x+dx*along,188-13*along,who==1?69:64,pose,p,left);
+    }
+
     @Override protected void onDraw(Canvas c) {
         super.onDraw(c);
         long now=SystemClock.uptimeMillis();
@@ -312,10 +324,8 @@ final class StationArt extends View {
             float along = ease(atShutter && action.startsWith("run") ? p/.65f : p);
             x+=(destX-x)*along; y+=(destY-y)*along;
         }
-        boolean together = acting && action.startsWith("run");
-        float follow = together ? ease((p-.12f)/.88f) : 0;
-        if(minseo) person(c,1,(setting==5?172:309)+(left?-28:28)*follow,188-11*follow,69,together?"runRight":"hold",p,left);
-        if(jian) person(c,2,164+(left?-18:18)*follow,188-7*follow,64,together?"awayRight":"hold",p,left);
+        if(minseo) companion(c,1,setting==5?172:309,acting,minseoAction,p);
+        if(jian) companion(c,2,164,acting,jianAction,p);
         if(lamp && setting==5){c.save();c.translate(x,y);paint.setColor(0x58ffe1a1);c.drawPath(beam,paint);c.restore();}
         if(hero) person(c,0,x,y,h,pose,walk,left);
         if(atShutter && acting && action.startsWith("run") && p>.5f) shutter(c,drop);

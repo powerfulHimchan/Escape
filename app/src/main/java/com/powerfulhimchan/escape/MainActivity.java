@@ -490,8 +490,10 @@ public final class MainActivity extends Activity {
         left.setEnabled(false);
         right.setEnabled(false);
         moving = true;
+        JSONObject option = index < 0 ? null : Story.option(game.beat(), index);
         String motion = game.select(index);
-        art.play(motion);
+        art.play(motion, option == null ? "hold" : option.optString("minseoMotion", "hold"),
+                option == null ? "hold" : option.optString("jianMotion", "hold"));
         if (index < 0) art.countdown(0, Math.max(1, clockDuration), false);
         if ("ending".equals(game.page())) archiveEnding(game.endingRecord());
         save();
