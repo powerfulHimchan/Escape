@@ -1,6 +1,7 @@
 """Check the actual journal, shutter scene and inventory on Android 17."""
 import json
 import re
+import struct
 import subprocess
 import time
 import xml.etree.ElementTree as ET
@@ -50,31 +51,59 @@ def await_state(predicate):
     raise AssertionError(state)
 
 
-def reach_shutter():
+def art_pixels():
+    raw = adb("exec-out", "screencap")
+    width, height, pixel_format = struct.unpack_from("<III", raw)
+    assert pixel_format in (1, 2), pixel_format
+    data = memoryview(raw)[-width * height * 4:]
+    return b"".join(data[(y * width + width // 5) * 4:(y * width + width * 4 // 5) * 4]
+                    for y in range(height // 5, height * 3 // 10, 2))
+
+
+def reach_shutter(right_path=False, inspect_train=False):
     adb("shell", "am", "start", "-W", "-n", PACKAGE + "/.MainActivity")
     find("이야기 시작")
     capture("Title")
     tap("이야기 시작")
+    if inspect_train:
+        departing = art_pixels()
+        capture("Departing")
+        time.sleep(3.8)
+        assert art_pixels() != departing, "Station did not change as the train left"
     find("노선도에 없는 역")
-    capture("Platform")
+    if inspect_train:
+        capture("Platform")
     tap("계속")
     # Both scenes use the same two footer buttons. Locate the upper button
     # before the clock starts so a slow accessibility dump cannot consume it.
-    x1, y1, x2, y2 = find("벽의 칸 번호를 기억한다")
+    x1, y1, x2, y2 = find("왼쪽 개찰구를 지나 손자국을 따라간다")
     upper = (str((x1 + x2) // 2), str((y1 + y2) // 2))
-    adb("shell", "input", "tap", *upper)
+    capture("Gates")
+    if right_path:
+        global lower_button
+        a, b, c, d = find("오른쪽 개찰구를 지나 정차 기록을 확인한다")
+        lower_button = (str((a+c)//2), str((b+d)//2))
+        adb("shell", "input", "tap", *lower_button)
+    else:
+        adb("shell", "input", "tap", *upper)
+    arrived = await_state(lambda state: state["step"] == 1 and state["page"] == "link")
+    assert "timeLeft" not in arrived
+    assert arrived["flags"].get("zeroCount" if right_path else "handprint")
+    tap("계속")
     await_state(lambda state: state["step"] == 1 and "timeLeft" in state)
     return upper
 
 
-adb("install", "-r", "AfterLastTrain-0.2.0.apk")
-upper = reach_shutter()
+adb("install", "-r", "AfterLastTrain-0.3.0.apk")
+upper = reach_shutter(inspect_train=True)
 time.sleep(.35)
 capture("Shutter")
 adb("shell", "input", "tap", *upper)
+time.sleep(.55)
+capture("Pickup")
 chosen = await_state(lambda state: state["step"] == 2)
 assert chosen["flags"].get("radio") and len(chosen["log"]) == 2
-time.sleep(1)
+time.sleep(1.4)
 tap("소지품")
 tap("무전기")
 find("사용하려면 건전지가 필요하다.")
@@ -82,8 +111,21 @@ capture("Inventory")
 
 # Use a fresh run to verify the unattended result on the same timed scene.
 adb("shell", "pm", "clear", PACKAGE)
-reach_shutter()
+reach_shutter(right_path=True)
+early = art_pixels()
+time.sleep(3)
+assert art_pixels() != early, "Shutter did not move inside the scene"
+capture("Closing")
 expired = await_state(lambda state: state["step"] == 2)
 assert expired["flags"].get("detour") and not expired["flags"].get("radio")
 assert len(expired["log"]) == 2 and expired["log"][-1]["label"] == "시간 안에 고르지 못함"
+adb("shell", "pm", "clear", PACKAGE)
+reach_shutter()
+# Both choice footers are anchored at the bottom. Read the lower button
+# on the untimed gate scene in the earlier run, then tap it during the timer.
+adb("shell", "input", "tap", *lower_button)
+time.sleep(.38)
+capture("Run")
+escaped = await_state(lambda state: state["step"] == 2)
+assert escaped["flags"].get("ran") and not escaped["flags"].get("radio")
 adb("shell", "pidof", PACKAGE)

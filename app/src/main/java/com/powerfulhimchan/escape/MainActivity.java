@@ -397,11 +397,31 @@ public final class MainActivity extends Activity {
                 && !(route.equals("voice") && game.step() == 0) && !(route.equals("records") && intro);
         boolean rider = route.equals("gather") || route.equals("retrieve")
                 || route.equals("rider") && game.step() > 0;
-        art.configure(scene, closeUp, nearby, rider, scene == 1 && !game.has("radio"),
+        boolean start = route.equals("start");
+        boolean choice = game.page().equals("choice");
+        int step = game.step();
+        boolean timedShutter = start && choice && step == 1;
+        boolean timed = choice && game.beat().optInt("seconds") > 0;
+        if (timed) closeUp = true;
+        int panel = -1;
+        if (start && !intro) {
+            if (choice && step == 0) panel = 0;
+            else if (!choice && step == 1) panel = 1;
+            else if (choice && step == 4) panel = 2;
+            else if (step >= 5) panel = 3;
+        }
+        art.configure(scene, closeUp, nearby, rider, timedShutter && !game.has("radio"),
                 game.has("poweredLamp"), true);
+        art.stage(start && intro, route.equals("train") && intro,
+                currentAct < 4 && scene == 0, timed, timedShutter, panel == 3 || scene == 2, panel);
         switch (game.page()) {
             case "intro":
-                showText(phase, current.optString("name"), current.optString("opening"), "");
+                String opening = current.optString("opening");
+                if (route.equals("hall") && game.has("handprint"))
+                    opening += "\n\n기둥 옆면에 아까 본 손바닥 모양 얼룩이 있었다. 같은 자리였다.";
+                if (route.equals("records") && game.has("zeroCount"))
+                    opening += "\n\n일지에도 하차 인원은 0명. 개찰구 전광판에서 본 숫자와 같았다.";
+                showText(phase, current.optString("name"), opening, "");
                 bind(left, "계속", this::continueScene);
                 bind(right, "", null);
                 break;
@@ -438,6 +458,9 @@ public final class MainActivity extends Activity {
                 text = "남은 건전지가 없다. 고정 호출기의 위치를 확인하거나 비상등이 비추는 방향을 기억할 수 있다.";
             }
         }
+        if ("power".equals(beat.optString("mode"))) {
+            text += " 호출기와 비상등은 갈라지는 통로 양쪽에 있다. 문이 열리는 동안 한쪽으로만 건널 수 있다.";
+        }
         showText(phase, beat.optString("title"), withLast(text), details);
         bind(left, game.choiceLabel(0), () -> select(0));
         bind(right, game.choiceLabel(1), () -> select(1));
@@ -467,15 +490,17 @@ public final class MainActivity extends Activity {
         left.setEnabled(false);
         right.setEnabled(false);
         moving = true;
+        JSONObject option = index < 0 ? null : Story.option(game.beat(), index);
         String motion = game.select(index);
-        art.play(motion);
+        art.play(motion, option == null ? "hold" : option.optString("minseoMotion", "hold"),
+                option == null ? "hold" : option.optString("jianMotion", "hold"));
         if (index < 0) art.countdown(0, Math.max(1, clockDuration), false);
         if ("ending".equals(game.page())) archiveEnding(game.endingRecord());
         save();
         handler.postDelayed(() -> {
             moving = false;
             render();
-        }, 850);
+        }, StationArt.ACTION_MS + 30);
     }
 
     private void displayClock(long remaining, long total) {

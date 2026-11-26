@@ -94,6 +94,8 @@ final class Game {
     String choiceLabel(int index) {
         JSONObject beat = beat();
         JSONObject option = Story.option(beat, index);
+        if (index == 0 && "supply".equals(beat.optString("mode")) && has("radio"))
+            return "건전지를 무전기에 넣고 호출을 받는다";
         if ("power".equals(beat.optString("mode"))) {
             if (index == 0 && (!has("radio") || !ownsBattery())) {
                 return has("poweredRadio") ? "무전기의 신호를 확인한다" : "고정 호출기의 위치를 확인한다";
@@ -141,6 +143,10 @@ final class Game {
         String motion = timeout ? "hold" : index == 0 ? "left" : "right";
         if (index == 0 && finalStep && "dawn".equals(ch.optString("key"))
                 && has("radio") && ownsBattery()) effects += ",poweredRadio";
+        if (index == 0 && "supply".equals(beat.optString("mode")) && has("radio")) {
+            effects = "battery,poweredRadio,signal";
+            aftermath = "건전지를 밀어 넣자 무전기에서 구두 굽 소리와 짧은 숨소리가 들렸다. 벽 안내판은 켜지지 않았다.";
+        }
         if ("powerRadio".equals(effects)) {
             if (has("radio") && ownsBattery()) {
                 effects = "poweredRadio,signal";
@@ -209,7 +215,8 @@ final class Game {
             put(state, "ending", ending);
             put(state, "page", "ending");
         }
-        return motion;
+        if (timeout && currentAct == 1) return "backstep";
+        return option == null ? motion : option.optString("motion", motion);
     }
 
     JSONObject endingRecord() {
