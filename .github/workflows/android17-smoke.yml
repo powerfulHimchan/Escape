@@ -1,0 +1,46 @@
+name: Android 17 startup test
+on:
+  push:
+    branches: [fix/android17-startup]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the reported APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download v0.1.0 --pattern 'AfterLastTrain-0.1.0.apk' --output Escape-under-test.apk
+      - name: Enable Android emulator virtualization when available
+        run: |
+          if [ -e /dev/kvm ]; then
+            sudo chmod a+rw /dev/kvm
+          fi
+      - uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: 37
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: |
+            adb shell getprop ro.build.version.release
+            adb shell getprop ro.build.version.sdk
+            adb install -r Escape-under-test.apk
+            adb logcat -c
+            adb shell am start -W -n com.powerfulhimchan.escape/.MainActivity || true
+            sleep 4
+            adb logcat -d -b crash -v brief | tee Escape-startup-crash.txt
+            adb shell dumpsys activity activities | grep -E 'ResumedActivity|topResumedActivity' | tee Escape-active-window.txt
+            adb shell pidof com.powerfulhimchan.escape
+            grep -F 'com.powerfulhimchan.escape/.MainActivity' Escape-active-window.txt
+            ! grep -q 'FATAL EXCEPTION' Escape-startup-crash.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Android-17-startup-log
+          path: Escape-*.txt
