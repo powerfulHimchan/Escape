@@ -182,24 +182,26 @@ public final class MainActivity extends Activity {
     private void buildLayout() {
         FrameLayout outer = new FrameLayout(this);
         outer.setBackgroundColor(BACKGROUND);
+        // Install the decor view before calling Android's window inset APIs.
+        setContentView(outer);
+
         if (Build.VERSION.SDK_INT >= 30) {
             getWindow().setDecorFitsSystemWindows(false);
             outer.setOnApplyWindowInsetsListener((view, insets) -> {
                 Insets safe = insets.getInsets(WindowInsets.Type.systemBars()
                         | WindowInsets.Type.displayCutout());
                 view.setPadding(safe.left, safe.top, safe.right, safe.bottom);
+                WindowInsetsController controller = view.getWindowInsetsController();
+                if (controller != null) {
+                    int mask = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                            | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
+                    controller.setSystemBarsAppearance(mask, mask);
+                }
                 return insets;
             });
-            WindowInsetsController controller = getWindow().getInsetsController();
-            if (controller != null) {
-                int mask = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-                        | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
-                controller.setSystemBarsAppearance(mask, mask);
-            }
         } else {
             getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         }
-        setContentView(outer);
         outer.requestApplyInsets();
 
         LinearLayout layout = column();

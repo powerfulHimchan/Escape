@@ -16,4 +16,4 @@ python3 tools/validate_story.py
 gradle :app:assembleDebug :app:lintDebug
 ```
 
-APK는 GitHub Releases의 v0.1.0에서 받을 수 있습니다. 디버그 키로 서명한 직접 설치용 빌드입니다.
+APK는 GitHub Releases의 v0.1.1에서 받을 수 있습니다. 디버그 키로 서명한 직접 설치용 빌드입니다.
