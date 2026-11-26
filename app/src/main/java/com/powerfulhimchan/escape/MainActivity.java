@@ -346,7 +346,7 @@ public final class MainActivity extends Activity {
                 bind(right, "", null);
                 break;
             case "link":
-                showText(phase, current.optString("name"), withLast(current.optString("sceneBreak")), "");
+                showText(phase, current.optString("name"), withLast(current.optJSONObject("links").optString(String.valueOf(game.step()))), "");
                 bind(left, "계속", this::continueScene);
                 bind(right, "", null);
                 break;
@@ -360,7 +360,7 @@ public final class MainActivity extends Activity {
     }
 
     private String withLast(String text) {
-        if (game.last().isEmpty() || game.step() == 0 || game.step() == 4 && !"link".equals(game.page())) {
+        if (game.last().isEmpty() || game.step() == 0 || game.chapter().optJSONObject("links").has(String.valueOf(game.step())) && !"link".equals(game.page())) {
             return text;
         }
         return game.last() + "\n\n" + text;

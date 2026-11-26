@@ -181,7 +181,7 @@ final class Game {
         state.remove("timeLeft");
         if (!finalStep) {
             put(state, "step", step() + 1);
-            if (step() == 4) put(state, "page", "link");
+            if (ch.optJSONObject("links").has(String.valueOf(step()))) put(state, "page", "link");
         } else if (currentAct < 5) {
             put(state, "branch", state.optInt("branch") * 2 + index);
             put(state, "act", currentAct + 1);

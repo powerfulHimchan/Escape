@@ -16,6 +16,9 @@ def visit(act, index, decisions=0, timed=0):
     beats = chapter["beats"]
     assert len(beats) == expected[act - 1], chapter["key"]
     assert all(chapter[key].strip() for key in ("opening", "sceneBreak", "name"))
+    assert len(chapter["links"]) >= 2
+    assert all(0 < int(step) < len(beats) and text.strip()
+               for step, text in chapter["links"].items())
     for beat in beats:
         assert all(beat[key].strip() for key in ("title", "body"))
         assert len(beat["choices"]) == 2
