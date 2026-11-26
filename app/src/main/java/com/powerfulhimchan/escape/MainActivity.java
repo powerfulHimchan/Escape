@@ -407,13 +407,25 @@ public final class MainActivity extends Activity {
         if (start && !intro) {
             if (choice && step == 0) panel = 0;
             else if (!choice && step == 1) panel = 1;
-            else if (choice && step == 4) panel = 2;
-            else if (step >= 5) panel = 3;
+            else if (step == 4) panel = choice ? 2 : 10;
+            else if (step == 2) panel = 4;
+            else if (step == 3) panel = 5;
+            else if (step == 5) panel = 6;
+            else if (step == 6) panel = game.has("junction") ? 5 : 11;
+            else if (step == 7) panel = 3;
         }
+        if (scene == 8 && (route.equals("oldstairs") || route.equals("climb"))) {
+            int fork = route.equals("oldstairs") ? 11 : 8;
+            if (step == fork || route.equals("oldstairs") && step == 1 && choice) panel = 10;
+            else if (route.equals("climb") && intro || step == 2 && !choice) panel = 7;
+        }
+        if (route.equals("correct") && intro) closeUp = true;
         art.configure(scene, closeUp, nearby, rider, timedShutter && !game.has("radio"),
                 game.has("poweredLamp"), true);
         art.stage(start && intro, route.equals("train") && intro,
                 currentAct < 4 && scene == 0, timed, timedShutter, panel == 3 || scene == 2, panel);
+        art.arrivalView(game.state.optInt("departedView", -1));
+        if (start && panel == 4 && !choice) art.enterKiosk(game.has("ran"));
         switch (game.page()) {
             case "intro":
                 String opening = current.optString("opening");
@@ -491,7 +503,7 @@ public final class MainActivity extends Activity {
         right.setEnabled(false);
         moving = true;
         JSONObject option = index < 0 ? null : Story.option(game.beat(), index);
-        String motion = game.select(index);
+        String motion = game.select(index, art.viewId());
         art.play(motion, option == null ? "hold" : option.optString("minseoMotion", "hold"),
                 option == null ? "hold" : option.optString("jianMotion", "hold"));
         if (index < 0) art.countdown(0, Math.max(1, clockDuration), false);
@@ -500,7 +512,7 @@ public final class MainActivity extends Activity {
         handler.postDelayed(() -> {
             moving = false;
             render();
-        }, StationArt.ACTION_MS + 30);
+        }, art.actionDuration() + 30);
     }
 
     private void displayClock(long remaining, long total) {
@@ -686,6 +698,7 @@ public final class MainActivity extends Activity {
         boolean together = three || outcome.equals("together") || outcome.equals("broadcast")
                 || outcome.equals("safe") || outcome.equals("train") && game.has("aboardTogether");
         art.configure(ending.optInt("setting"), false, together, three, false, game.has("poweredLamp"), true);
+        art.arrivalView(game.state.optInt("departedView", -1));
         showText("엔딩" + ("기존".equals(category) ? "" : " · " + category),
                 ending.optString("title"), endingBody(ending), "");
         bind(left, "원하는 막부터 다시 보기", this::chooseAct);

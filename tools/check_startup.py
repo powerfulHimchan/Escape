@@ -43,8 +43,15 @@ def saved_state():
 
 def await_state(predicate):
     deadline = time.monotonic() + 17
+    state = None
     while time.monotonic() < deadline:
-        state = saved_state()
+        # SharedPreferences.apply writes asynchronously and renames the XML
+        # during replacement. The UI can advance before the file is readable.
+        try:
+            state = saved_state()
+        except (subprocess.CalledProcessError, ET.ParseError):
+            time.sleep(.1)
+            continue
         if predicate(state):
             return state
         time.sleep(.1)
@@ -94,7 +101,7 @@ def reach_shutter(right_path=False, inspect_train=False):
     return upper
 
 
-adb("install", "-r", "AfterLastTrain-0.3.0.apk")
+adb("install", "-r", "AfterLastTrain-0.4.0.apk")
 upper = reach_shutter(inspect_train=True)
 time.sleep(.35)
 capture("Shutter")
@@ -129,3 +136,36 @@ capture("Run")
 escaped = await_state(lambda state: state["step"] == 2)
 assert escaped["flags"].get("ran") and not escaped["flags"].get("radio")
 adb("shell", "pidof", PACKAGE)
+
+time.sleep(1.5)
+find("계속")
+capture("UpperKiosk")
+
+# Start at the old staircase fork through a regular saved game. Both choices
+# must play on the same landing and arrive at different chapter openings.
+def staircase_fork(button, expected, screenshot):
+    adb("shell", "am", "force-stop", PACKAGE)
+    state = {"act": 4, "branch": 7, "step": 11, "page": "choice", "flags": {}, "log": []}
+    prefs = ET.Element("map")
+    ET.SubElement(prefs, "string", name="story.save").text = json.dumps(
+        {"state": state, "checkpoints": [None, None, None, state]})
+    subprocess.run(["adb", "shell", "run-as", PACKAGE, "tee", "shared_prefs/escape.xml"],
+                   input=ET.tostring(prefs), stdout=subprocess.DEVNULL, check=True)
+    adb("shell", "am", "start", "-W", "-n", PACKAGE + "/.MainActivity")
+    tap("이어하기")
+    x1, y1, x2, y2 = find(button)
+    before = art_pixels()
+    adb("shell", "input", "tap", str((x1+x2)//2), str((y1+y2)//2))
+    time.sleep(1.25)
+    capture(screenshot)
+    chosen = await_state(lambda s: s["act"] == 5)
+    assert chosen["branch"] == expected and chosen["departedView"] == 35
+    find("계속")
+    assert art_pixels() != before, "Arrival reused the departure scene"
+    capture(screenshot + "Arrival")
+    return art_pixels()
+
+
+upper_landing = staircase_fork("계단 끝까지 올라가 직접 확인한다", 14, "Upstairs")
+lower_landing = staircase_fork("현재 통로와 안내도를 대조해 돌아간다", 15, "Downstairs")
+assert upper_landing != lower_landing, "Both stair exits showed the same destination"
