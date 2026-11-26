@@ -392,7 +392,9 @@ public final class MainActivity extends Activity {
         int scene = intro ? current.optInt("setting") : game.beat().optInt("setting");
         boolean closeUp = "link".equals(game.page()) || scene == 1 || route.equals("hall") && game.step() == 0;
         boolean nearby = currentAct >= 3 && !route.equals("trainSolo") && !route.equals("change")
-                && !route.equals("retrieve") && !(route.equals("voice") && game.step() == 0);
+                && !route.equals("retrieve") && !route.equals("partial") && !route.equals("climb")
+                && !route.equals("correct") && !(route.equals("oldstairs") && game.step() > 0)
+                && !(route.equals("voice") && game.step() == 0) && !(route.equals("records") && intro);
         boolean rider = route.equals("gather") || route.equals("retrieve")
                 || route.equals("rider") && game.step() > 0;
         art.configure(scene, closeUp, nearby, rider, scene == 1 && !game.has("radio"),
