@@ -152,6 +152,37 @@ final class StationArt extends View {
         c.restore();
     }
 
+    private final Path supplyMap = polygon(251,77,350,55,350,131,251,154);
+
+    private void fixtures(Canvas c, long now, float progress) {
+        if (panel == 2) {
+            float glow = started >= 0 && action.equals("reach") ? ease((progress-.55f)/.25f) : 0;
+            c.save();
+            c.clipPath(supplyMap);
+            c.drawColor(((int)(195*(1-glow)) << 24) | 0x0013171b);
+            c.restore();
+        }
+        if (!close || panel >= 0) return;
+        if (setting == 2) {
+            // Move the second hand on the clock above the dispatch console.
+            double radians=(now-entered)/60000d*Math.PI*2;
+            paint.setColor(0xff613728);
+            c.drawLine(466,31,466+(float)Math.sin(radians)*12,31-(float)Math.cos(radians)*12,paint);
+        } else if (setting == 5) {
+            int signal=((now-entered)/680)%2==0 ? 0xffff5842 : 0xff9c3832;
+            prop(c,signal,133,52,5,7);
+            prop(c,signal,458,51,4,7);
+        } else if (setting == 9) {
+            // Fine rain crossing the shelter roof and reflections on the pavement.
+            paint.setColor(0x748babc5);
+            for(int i=0;i<18;i++) {
+                float x=(i*113)%494+7;
+                float y=(i*37+(now-entered)*.12f)%246;
+                c.drawLine(x,y,x-1,y+4,paint);
+            }
+        }
+    }
+
     private void prop(Canvas c, int color, float x, float y, int w, int h) {
         paint.setColor(color);
         c.drawRect(x,y,x+w,y+h,paint);
@@ -193,6 +224,7 @@ final class StationArt extends View {
         c.save();
         c.scale(getWidth()/512f,getHeight()/256f);
         room(c);
+        fixtures(c, now, p);
         if(departing || arriving) train(c,elapsed);
         if(callLight || atShutter) {
             boolean on=((int)elapsed/460)%2==0;
@@ -230,7 +262,7 @@ final class StationArt extends View {
             if(action.equals("backstep")) { destX=x-33; destY=y-17; }
             if(action.equals("signal") || action.equals("reach") || action.equals("hold")) {destX=x;destY=y;}
             if(panel==0) {destX=left?130:393;destY=left?189:151;}
-            if(panel==2) {destX=action.equals("pick")?160:307;destY=185;if(p>.62f)pose="reach";}
+            if(panel==2) {left=action.equals("pick"); destX=left?160:307;destY=185;if(p>.62f)pose="reach";}
             if(atShutter) {
                 if(action.equals("pick")) {destX=397;destY=172; if(p>.65f)pose="reach";}
                 else if(action.startsWith("run")){destX=155;destY=144;h-=17*ease(p/.65f);}
@@ -249,6 +281,7 @@ final class StationArt extends View {
         c.restore();
         if ((acting && p<1) || timing || (departing && elapsed<4100) || (arriving && elapsed<2900))
             postInvalidateDelayed(35);
-        else if(callLight || atShutter) postInvalidateDelayed(420);
+        else if(close && setting==9) postInvalidateDelayed(80);
+        else if(callLight || atShutter || close && (setting==2 || setting==5)) postInvalidateDelayed(420);
     }
 }
