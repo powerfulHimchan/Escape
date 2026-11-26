@@ -43,8 +43,15 @@ def saved_state():
 
 def await_state(predicate):
     deadline = time.monotonic() + 17
+    state = None
     while time.monotonic() < deadline:
-        state = saved_state()
+        # SharedPreferences.apply writes asynchronously and renames the XML
+        # during replacement. The UI can advance before the file is readable.
+        try:
+            state = saved_state()
+        except (subprocess.CalledProcessError, ET.ParseError):
+            time.sleep(.1)
+            continue
         if predicate(state):
             return state
         time.sleep(.1)
