@@ -9,6 +9,10 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ['36', '37']
     steps:
       - uses: actions/checkout@v4
       - name: Download the reported APK
@@ -20,9 +24,13 @@ jobs:
           if [ -e /dev/kvm ]; then
             sudo chmod a+rw /dev/kvm
           fi
+      - name: Inspect available Android system images
+        run: sdkmanager --list --channel=3 2>/dev/null | grep -E 'system-images;android-(36|37).*google_apis;x86_64|platforms;android-(36|37)' || true
       - uses: ReactiveCircus/android-emulator-runner@v2
         with:
-          api-level: 37
+          api-level: 35
+          system-image-api-level: '${{ matrix.image }}'
+          channel: canary
           arch: x86_64
           target: google_apis
           profile: pixel_6
@@ -42,5 +50,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Android-17-startup-log
+          name: Android-API-${{ matrix.image }}-startup-log
           path: Escape-*.txt
