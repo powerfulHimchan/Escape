@@ -28,8 +28,8 @@ jobs:
         run: |
           python3 tools/validate_story.py
           gradle --no-daemon :app:assembleDebug :app:lintDebug
-          cp app/build/outputs/apk/debug/app-debug.apk AfterLastTrain-0.3.0.apk
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose AfterLastTrain-0.3.0.apk
+          cp app/build/outputs/apk/debug/app-debug.apk AfterLastTrain-0.4.0.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose AfterLastTrain-0.4.0.apk
       - name: Enable emulator acceleration
         run: sudo chmod a+rw /dev/kvm
       - uses: ReactiveCircus/android-emulator-runner@v2
@@ -42,9 +42,9 @@ jobs:
           script: python3 tools/check_startup.py
       - uses: actions/upload-artifact@v4
         with:
-          name: AfterLastTrain-0.3.0
+          name: AfterLastTrain-0.4.0
           path: |
-            AfterLastTrain-0.3.0.apk
+            AfterLastTrain-0.4.0.apk
             Escape-*.png
           if-no-files-found: error
   publish:
@@ -56,15 +56,15 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: AfterLastTrain-0.3.0
+          name: AfterLastTrain-0.4.0
       - name: Publish APK
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           SHA: ${{ github.sha }}
         run: |
-          if gh release view v0.3.0 --repo "$REPO" >/dev/null 2>&1; then
-            gh release upload v0.3.0 AfterLastTrain-0.3.0.apk Escape-*.png --repo "$REPO" --clobber
+          if gh release view v0.4.0 --repo "$REPO" >/dev/null 2>&1; then
+            gh release upload v0.4.0 AfterLastTrain-0.4.0.apk Escape-*.png --repo "$REPO" --clobber
           else
-            gh release create v0.3.0 AfterLastTrain-0.3.0.apk Escape-*.png --repo "$REPO" --target "$SHA" --title '막차가 떠난 뒤 0.3.0' --notes '열차와 셔터, 인물 동작 및 분기 선택 개편.'
+            gh release create v0.4.0 AfterLastTrain-0.4.0.apk Escape-*.png --repo "$REPO" --target "$SHA" --title '막차가 떠난 뒤 0.4.0' --notes '문과 통로에 맞춘 이동 경로, 계단 오르내리기 및 층별 도착 장면.'
           fi

@@ -128,7 +128,7 @@ final class Game {
         return "";
     }
 
-    String select(int index) {
+    String select(int index, int view) {
         JSONObject ch = chapter();
         JSONObject beat = beat();
         boolean timeout = index < 0;
@@ -140,7 +140,7 @@ final class Game {
         String effects = timeout ? beat.optString("timeoutEffect") : option.optString("effect");
         JSONObject flags = state.optJSONObject("flags");
         boolean important = finalStep || timeout;
-        String motion = timeout ? "hold" : index == 0 ? "left" : "right";
+        String motion = "hold";
         if (index == 0 && finalStep && "dawn".equals(ch.optString("key"))
                 && has("radio") && ownsBattery()) effects += ",poweredRadio";
         if (index == 0 && "supply".equals(beat.optString("mode")) && has("radio")) {
@@ -176,6 +176,11 @@ final class Game {
                 if (signal.equals(name)) important = true;
             }
         }
+
+        motion = option == null ? (currentAct == 1 ? "backstep" : "hold") : option.optString("motion", motion);
+        boolean moved = StationArt.travels(motion) || view == 29 && motion.equals("pick")
+                || view == 13 && motion.equals("pick");
+        if (moved) put(state, "departedView", view);
 
         JSONObject entry = new JSONObject();
         put(entry, "act", currentAct);
@@ -215,8 +220,7 @@ final class Game {
             put(state, "ending", ending);
             put(state, "page", "ending");
         }
-        if (timeout && currentAct == 1) return "backstep";
-        return option == null ? motion : option.optString("motion", motion);
+        return motion;
     }
 
     JSONObject endingRecord() {
