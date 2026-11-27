@@ -104,7 +104,7 @@ def reach_shutter(right_path=False, inspect_train=False):
     return upper
 
 
-adb("install", "-r", "AfterLastTrain-0.5.0.apk")
+adb("install", "-r", "AfterLastTrain-0.6.0.apk")
 upper = reach_shutter(inspect_train=True)
 time.sleep(.35)
 capture("Shutter")
@@ -181,3 +181,55 @@ assert upper_landing != lower_landing, "Both stair exits showed the same destina
 resume_at({"act": 2, "branch": 1, "step": 0, "page": "intro", "flags": {}, "log": []})
 find("대합실")
 capture("HallScale")
+
+
+def at(act, branch, step, page="choice", flags=None, log=None):
+    resume_at({"act": act, "branch": branch, "step": step, "page": page,
+               "flags": flags or {}, "log": log or []})
+
+
+def visible_text():
+    adb("shell", "uiautomator", "dump", "/sdcard/escape.xml")
+    tree = ET.fromstring(adb("shell", "cat", "/sdcard/escape.xml"))
+    return " ".join(node.get("text", "") for node in tree.iter("node"))
+
+
+at(2, 0, 1)
+# The upper choice always occupies the same footer slot. Avoid an accessibility
+# dump during this nine-second decision, as in the shutter timing test above.
+adb("shell", "input", "tap", *upper)
+picked = await_state(lambda state: state["step"] == 2)
+assert picked["log"][-1]["label"] == "안내도를 들고 간다", picked
+find("처음 내렸던 승강장")
+passage = visible_text()
+assert "안주머니" in passage, passage
+capture("PlatformReset")
+tap("계속")
+find("컵에 남은 물")
+capture("OfficeCup")
+tap("수위를 찍고 물을 조금 덜어 둔다")
+assert await_state(lambda s: s["step"] == 3)["flags"]["cupMeasured"]
+at(2, 0, 9, flags={"cupMeasured": True})
+passage = visible_text()
+assert "사진 속 손잡이" in passage, passage
+at(2, 0, 9)
+assert "사진 속 손잡이" not in visible_text()
+
+# Read a 0.5 save with only its original choice label to recover the surviving note.
+at(3, 0, 4, log=[{"act": 2, "label": "표찰 한 칸에 정차 시각을 쓴다"}])
+passage = visible_text()
+assert "표찰에 적어 둔 00:11" in passage, passage
+
+def ending_cast(branch, button, ending_id, minseo, jian):
+    at(5, branch, 8)
+    tap(button)
+    state = await_state(lambda s: s["page"] == "ending")
+    assert state["ending"] == ending_id
+    prefs = ET.fromstring(adb("shell", "run-as", PACKAGE, "cat", "shared_prefs/escape.xml"))
+    archives = [json.loads(n.text) for n in prefs.findall("string") if n.get("name") != "story.save"]
+    record = next(a[ending_id][-1] for a in archives if ending_id in a)
+    assert (record["withMinseo"], record["withJian"]) == (minseo, jian)
+
+ending_cast(3, "둘을 방송실 쪽으로 안내한다", "broadcast", True, True)
+ending_cast(13, "민서와 정차 기록을 갖고 함께 나간다", "receipt", True, False)
+ending_cast(13, "지금 가진 자료만 들고 먼저 나간다", "receipt", False, False)

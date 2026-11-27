@@ -71,6 +71,31 @@ final class StationArt extends View {
         return p;
     }
 
+    private boolean officeCup, loweredCup, compareCup, acrossGlass;
+
+    void storyDetails(boolean cup,boolean lowered,boolean compare,boolean distant) {
+        officeCup=cup;
+        loweredCup=lowered;
+        compareCup=compare;
+        acrossGlass=distant;
+    }
+
+    private void drawOfficeCup(Canvas c,boolean low) {
+        // Transparent tumbler on the desk, next to the open notebook.
+        prop(c,0xff302d35,87,177,28,3);
+        prop(c,low?0xff759898:0xffbbaca0,89,175,23,3);
+        prop(c,0xffc4c9bd,94,153,14,2);
+        prop(c,0xff899693,93,155,2,19);
+        prop(c,0xff899693,107,155,2,19);
+        int level=low?169:161;
+        prop(c,0xff719699,95,level,12,174-level);
+        prop(c,0xffbed7cc,95,level,12,2);
+        prop(c,0xffaac1bd,95,174,12,2);
+        prop(c,0xffb3b6a5,109,157,4,2);
+        prop(c,0xffb3b6a5,112,158,2,6);
+        prop(c,0xffb3b6a5,109,164,4,2);
+    }
+
     void configure(int scene, boolean closeUp, boolean withMinseo, boolean withJian,
                    boolean showRadio, boolean light, boolean showHero) {
         setting = scene;
@@ -84,6 +109,7 @@ final class StationArt extends View {
         entered = SystemClock.uptimeMillis();
         started = -1;
         enteringKiosk = false;
+        officeCup=loweredCup=compareCup=acrossGlass=false;
         departing = arriving = emptyPlatform = atShutter = counterChoice = timedScene = callLight = false;
         invalidate();
     }
@@ -300,7 +326,7 @@ final class StationArt extends View {
             c.save();
             c.clipPath(glass);
             c.translate(0,-224*(1-amount));
-            paint.setColor(0xa5484650);
+            paint.setColor(acrossGlass?0xff484650:0xa5484650);
             c.drawRect(48,-84,370,230,paint);
             paint.setColor(0x80545259);
             for (int y=-85;y<=230;y+=8) c.drawLine(48,y,370,y-90,paint);
@@ -476,6 +502,16 @@ final class StationArt extends View {
         c.scale(getWidth()/512f,getHeight()/256f);
         room(c);
         fixtures(c, now, p);
+        if (officeCup) drawOfficeCup(c,loweredCup || compareCup && acting && action.equals("reach") && p>.72f);
+        if (acrossGlass) {
+            c.save();
+            c.clipPath(glass);
+            boolean leaving=acting && minseoAction.startsWith("away");
+            float along=leaving?ease(p):0;
+            person(c,1,190+108*along,151-28*along,69-12*along,
+                    acting?minseoAction:"hold",leaving?2*along:p,false);
+            c.restore();
+        }
         if (panel==3 && acting && action.equals("runRight")) openOfficeDoor(c,p);
         if(departing || arriving) train(c,elapsed);
         float door=doorAmount(p,acting);
@@ -568,7 +604,16 @@ final class StationArt extends View {
             if (!acting || lane!=0 || y>=179) gateArm(c,0,0);
             if (!acting || lane!=1 || y>=179) gateArm(c,1,0);
         }
-        if(minseo) companion(c,1,setting==5?172:309,acting,minseoAction,travelTime);
+        if (compareCup && !acting && elapsed<680) {
+            float t=ease(elapsed/680);
+            x=mix(204,floor.x,t); y=mix(149,floor.y,t); pose="walk"; walk=t*1.4f;
+        }
+        if (compareCup && acting && action.equals("reach")) {
+            float t=interval(p,0,.62f);
+            x=mix(floor.x,119,t); y=mix(floor.y,203,t); left=true;
+            pose=p<.62f?"walk":"reach"; walk=p<.62f?1.5f*t:unit((p-.62f)/.38f);
+        }
+        if(minseo && !acrossGlass) companion(c,1,setting==5?172:309,acting,minseoAction,travelTime);
         if(jian) companion(c,2,164,acting,jianAction,travelTime);
         if(lamp && setting==5){c.save();c.translate(x,y);paint.setColor(0x58ffe1a1);c.drawPath(beam,paint);c.restore();}
         if (hero) {
@@ -589,7 +634,7 @@ final class StationArt extends View {
             else if (setting==6 || setting==7 || setting==11) timedFixture(c,door);
         }
         c.restore();
-        if ((acting && p<1) || enteringKiosk && elapsed<860 || timing || (departing && elapsed<4100) || (arriving && elapsed<2900))
+        if ((acting && p<1) || compareCup && elapsed<680 || enteringKiosk && elapsed<860 || timing || (departing && elapsed<4100) || (arriving && elapsed<2900))
             postInvalidateOnAnimation();
         else if(close && setting==9) postInvalidateDelayed(80);
         else if(callLight || atShutter || close && (setting==2 || setting==5)) postInvalidateDelayed(420);

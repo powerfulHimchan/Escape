@@ -390,6 +390,8 @@ public final class MainActivity extends Activity {
         String route = current.optString("key");
         boolean intro = "intro".equals(game.page());
         int scene = intro ? current.optInt("setting") : game.beat().optInt("setting");
+        JSONObject linkView=game.linkView();
+        if (linkView!=null) scene=linkView.optInt("setting",scene);
         boolean closeUp = "link".equals(game.page()) || scene == 1 || route.equals("hall") && game.step() == 0;
         boolean nearby = currentAct >= 3 && !route.equals("trainSolo") && !route.equals("change")
                 && !route.equals("retrieve") && !route.equals("partial") && !route.equals("climb")
@@ -422,18 +424,23 @@ public final class MainActivity extends Activity {
             else if (route.equals("climb") && intro || step == 2 && !choice) panel = 7;
         }
         if (route.equals("correct") && intro) closeUp = true;
+        boolean cup=route.equals("office") && scene==2;
+        boolean farMinseo=route.equals("voice") && step==1 && choice;
+        if (cup || farMinseo) closeUp=true;
         art.configure(scene, closeUp, nearby, rider, timedShutter && !game.has("radio"),
                 game.has("poweredLamp"), true);
         art.stage(start && intro, route.equals("train") && intro,
-                currentAct < 4 && scene == 0, timed, timedShutter, panel == 3 || scene == 2, panel,
+                (currentAct < 4 || route.equals("rider")) && scene == 0, timed, timedShutter, panel == 3 || scene == 2, panel,
                 route.equals("trainBoth") || route.equals("dawn"));
-        if (!trainThreshold) art.arrivalView(game.state.optInt("departedView", -1));
+        art.storyDetails(cup, cup && game.has("cupMeasured") && step<9,
+                cup && choice && step==2, farMinseo);
+        if (!trainThreshold && !cup && !farMinseo && linkView==null) art.arrivalView(game.state.optInt("departedView", -1));
         if (start && panel == 4 && !choice) art.enterKiosk(game.has("ran"));
         switch (game.page()) {
             case "intro":
                 String opening = current.optString("opening");
                 if (route.equals("hall") && game.has("handprint"))
-                    opening += "\n\n기둥 옆면에 아까 본 손바닥 모양 얼룩이 있었다. 같은 자리였다.";
+                    opening += "\n\n계단 손잡이가 끝나는 데서도 흰 손자국이 보였다. 아래층 기둥의 얼룩처럼 손가락 셋이 길게 끌려 있었다.";
                 if (route.equals("records") && game.has("zeroCount"))
                     opening += "\n\n일지에도 하차 인원은 0명. 개찰구 전광판에서 본 숫자와 같았다.";
                 showText(phase, current.optString("name"), opening, "");
@@ -441,7 +448,12 @@ public final class MainActivity extends Activity {
                 bind(right, "", null);
                 break;
             case "link":
-                showText(phase, current.optString("name"), withLast(current.optJSONObject("links").optString(String.valueOf(game.step()))), "");
+                String passage=current.optJSONObject("links").optString(String.valueOf(step));
+                if (linkView!=null && linkView.optBoolean("choiceResult")) {
+                    String result=game.linkResult();
+                    if (!result.isEmpty()) passage=result+"\n\n"+passage;
+                } else if (linkView==null || !linkView.optBoolean("arrivalOnly")) passage=withLast(passage);
+                showText(phase,linkView==null?current.optString("name"):linkView.optString("title"),passage,"");
                 bind(left, "계속", this::continueScene);
                 bind(right, "", null);
                 break;
@@ -466,6 +478,19 @@ public final class MainActivity extends Activity {
         int seconds = beat.optInt("seconds");
         String details = game.timerClue();
         String text = beat.optString("body");
+        if ("supply".equals(beat.optString("mode")) && game.has("radio"))
+            text="비품함에 건전지가 하나 있다. 무전기에 넣으면 지금 들어오는 호출을 받을 수 있다. 벽 안내판에 넣으면 숨은 통로에 불이 들어오지만 잠긴 덮개에서 건전지를 꺼낼 수 없다.";
+        if ("tagReview".equals(beat.optString("mode"))) {
+            String note=game.tagNote();
+            if (!note.isEmpty()) text=note+"\n\n"+text;
+        }
+        String route=game.chapter().optString("key");
+        if (route.equals("office") && game.step()==9 && game.has("cupMeasured"))
+            text="책상 위 받침이 말라 있었다. 도윤이 사진을 열어 컵 옆에 댔다. 덜어 냈던 물이 사진 속 손잡이 높이까지 다시 차 있었다.\n\n"+text;
+        if (route.equals("hall") && game.step()==2 && game.has("hallWatch"))
+            text="출구에서 본 건 00:16이었는데, 기둥 위 시계는 이제 00:11이었다.\n\n"+text;
+        if (route.equals("hall") && game.step()==2 && game.has("hallStop"))
+            text="도윤은 정류장 간판의 색을 기억하고 있었다. 이 기둥에서는 바깥이 보이지 않았다.\n\n"+text;
         if ("power".equals(beat.optString("mode"))) {
             if (game.has("poweredRadio") || game.has("poweredLamp")) {
                 text = "건전지를 넣은 장비의 신호를 확인할 수 있다. 다른 장비 대신 통로에 남은 표시를 살펴볼 수도 있다.";
@@ -696,11 +721,8 @@ public final class MainActivity extends Activity {
 
     private void showEnding(JSONObject ending) {
         String category = ending.optString("type");
-        boolean three = "three".equals(ending.optString("id"));
-        String outcome = ending.optString("id");
-        boolean together = three || outcome.equals("together") || outcome.equals("broadcast")
-                || outcome.equals("safe") || outcome.equals("train") && game.has("aboardTogether");
-        art.configure(ending.optInt("setting"), false, together, three, false, game.has("poweredLamp"), true);
+        art.configure(ending.optInt("setting"), false, ending.optBoolean("withMinseo"),
+                ending.optBoolean("withJian"), false, game.has("poweredLamp"), true);
         art.arrivalView(game.state.optInt("departedView", -1));
         showText("엔딩" + ("기존".equals(category) ? "" : " · " + category),
                 ending.optString("title"), endingBody(ending), "");

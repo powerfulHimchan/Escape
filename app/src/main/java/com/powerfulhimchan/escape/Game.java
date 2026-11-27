@@ -120,6 +120,45 @@ final class Game {
         return label;
     }
 
+    JSONObject linkView() {
+        JSONObject views=chapter().optJSONObject("linkViews");
+        return "link".equals(page()) && views!=null ? views.optJSONObject(String.valueOf(step())) : null;
+    }
+
+    // Re-read revised outcomes for an older save paused on a transition.
+    String linkResult() {
+        JSONObject previous=Story.beat(chapter(),step()-1);
+        JSONArray log=state.optJSONArray("log");
+        JSONObject entry=log.optJSONObject(log.length()-1);
+        if (entry==null) return "";
+        String effects=entry.optString("effect");
+        if (previous.has("seconds") && effects.equals(previous.optString("timeoutEffect")))
+            return previous.optString("timeout");
+        for (int index=0;index<2;index++) {
+            JSONObject choice=Story.option(previous,index);
+            if (choice.optString("label").equals(entry.optString("label")) ||
+                    effects.equals(choice.optString("effect"))) return choice.optString("after");
+        }
+        return last();
+    }
+
+    String tagNote() {
+        boolean sketch=has("tagSketch"), time=has("tagTime");
+        if (!sketch && !time) {
+            JSONArray log=state.optJSONArray("log");
+            for (int i=0;i<log.length();i++) {
+                JSONObject entry=log.optJSONObject(i);
+                if (entry.optInt("act")!=2) continue;
+                String label=entry.optString("label");
+                if (label.equals("표찰 한 칸에 위치를 그린다")) sketch=true;
+                if (label.equals("표찰 한 칸에 정차 시각을 쓴다")) time=true;
+            }
+        }
+        if (sketch) return "표찰에는 승강장까지 꺾어 가는 길이 그려져 있다. 도윤은 종이를 돌려 자기가 걸어온 방향에 맞췄다.";
+        if (time) return "표찰에 적어 둔 00:11은 그대로다. 도윤은 지금 들리는 소리가 그때로부터 얼마나 뒤인지 가늠했다.";
+        return "";
+    }
+
     String timerClue() {
         if (act() == 5 && step() == 8 && "streetProof".equals(chapter().optString("key"))
                 && (!has("proofPlace") || !has("proofTime"))) {
@@ -236,6 +275,17 @@ final class Game {
         if ("dawn".equals(ending.optString("id")) && has("outsideListener")) {
             primary = "도윤은 지상 정류장에서 약속한 시각을 기다렸다. 역 입구가 있던 벽 쪽에서 작은 잡음이 흘러나왔다.";
         }
+        String outcome=ending.optString("id"), route=chapter().optString("key");
+        boolean three="three".equals(outcome) || ("broadcast".equals(outcome) && "retrieve".equals(route));
+        boolean withMinseo=three || "together".equals(outcome) || "broadcast".equals(outcome)
+                || "safe".equals(outcome) || "train".equals(outcome) && has("aboardTogether")
+                || "receipt".equals(outcome) && "streetProof".equals(route) && has("finalLeft");
+        put(record,"withMinseo",withMinseo);
+        put(record,"withJian",three);
+        if (three && "broadcast".equals(outcome))
+            primary="다시 00:11. 민서는 수신기를 지켰고 지안은 방송실 문을 열고 승강장을 살폈다. 새 열차가 다가오자 도윤이 마이크를 켰다.";
+        if (withMinseo && "receipt".equals(outcome))
+            primary="민서는 도윤 옆에 앉아 정류장 이름을 불러 줬다. 두 사람이 확인한 내용만 적어 보내고 한참을 기다린 뒤, 도윤이 휴대폰을 열었다.";
         JSONArray variants = ending.optJSONArray("alt");
         String epilogue = "";
         String variant = "default";
