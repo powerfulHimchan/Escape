@@ -51,3 +51,16 @@ for ending in story["endings"]:
     assert len({variant[1] for variant in ending["alt"]}) == len(ending["alt"])
 print(f"Verified {len(chapters)} chapters, {len(routes)} full routes, "
       f"{len(routes) * 2} terminal actions and {len(targets)} endings")
+
+for c in story["chapters"]:
+    for step, view in c.get("linkViews", {}).items():
+        assert step in c["links"] and view["title"] and 0 <= view["setting"] < 12
+    tag_entries = [b for b in c["beats"] if b.get("mode") == "tagReview"]
+    assert len(tag_entries) == (1 if c["act"] >= 3 else 0)
+    assert sum("마지막 빈칸" in b["body"] for b in c["beats"]) == 0
+    if c["act"] == 2:
+        entry = next(b for b in c["beats"] if b["title"] == "종이에 남는 것")
+        assert "tagSketch" in entry["choices"][0]["effect"] and "tagTime" in entry["choices"][1]["effect"]
+        assert c["linkViews"]["2"]["setting"] == 0
+train = next(c for c in story["chapters"] if c["key"] == "train")
+assert all(b["setting"] != 6 for b in train["beats"])
