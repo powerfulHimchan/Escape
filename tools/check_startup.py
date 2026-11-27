@@ -96,12 +96,15 @@ def reach_shutter(right_path=False, inspect_train=False):
     arrived = await_state(lambda state: state["step"] == 1 and state["page"] == "link")
     assert "timeLeft" not in arrived
     assert arrived["flags"].get("zeroCount" if right_path else "handprint")
-    tap("계속")
+    a, b, c, d = find("계속")
+    global shutter_start
+    shutter_start = time.monotonic()
+    adb("shell", "input", "tap", str((a+c)//2), str((b+d)//2))
     await_state(lambda state: state["step"] == 1 and "timeLeft" in state)
     return upper
 
 
-adb("install", "-r", "AfterLastTrain-0.4.0.apk")
+adb("install", "-r", "AfterLastTrain-0.5.0.apk")
 upper = reach_shutter(inspect_train=True)
 time.sleep(.35)
 capture("Shutter")
@@ -110,7 +113,7 @@ time.sleep(.55)
 capture("Pickup")
 chosen = await_state(lambda state: state["step"] == 2)
 assert chosen["flags"].get("radio") and len(chosen["log"]) == 2
-time.sleep(1.4)
+find("계속")
 tap("소지품")
 tap("무전기")
 find("사용하려면 건전지가 필요하다.")
@@ -130,8 +133,9 @@ adb("shell", "pm", "clear", PACKAGE)
 reach_shutter()
 # Both choice footers are anchored at the bottom. Read the lower button
 # on the untimed gate scene in the earlier run, then tap it during the timer.
+time.sleep(max(0, shutter_start + 7.25 - time.monotonic()))
 adb("shell", "input", "tap", *lower_button)
-time.sleep(.38)
+time.sleep(.78)
 capture("Run")
 escaped = await_state(lambda state: state["step"] == 2)
 assert escaped["flags"].get("ran") and not escaped["flags"].get("radio")
@@ -143,9 +147,8 @@ capture("UpperKiosk")
 
 # Start at the old staircase fork through a regular saved game. Both choices
 # must play on the same landing and arrive at different chapter openings.
-def staircase_fork(button, expected, screenshot):
+def resume_at(state):
     adb("shell", "am", "force-stop", PACKAGE)
-    state = {"act": 4, "branch": 7, "step": 11, "page": "choice", "flags": {}, "log": []}
     prefs = ET.Element("map")
     ET.SubElement(prefs, "string", name="story.save").text = json.dumps(
         {"state": state, "checkpoints": [None, None, None, state]})
@@ -153,6 +156,11 @@ def staircase_fork(button, expected, screenshot):
                    input=ET.tostring(prefs), stdout=subprocess.DEVNULL, check=True)
     adb("shell", "am", "start", "-W", "-n", PACKAGE + "/.MainActivity")
     tap("이어하기")
+
+
+
+def staircase_fork(button, expected, screenshot):
+    resume_at({"act": 4, "branch": 7, "step": 11, "page": "choice", "flags": {}, "log": []})
     x1, y1, x2, y2 = find(button)
     before = art_pixels()
     adb("shell", "input", "tap", str((x1+x2)//2), str((y1+y2)//2))
@@ -169,3 +177,7 @@ def staircase_fork(button, expected, screenshot):
 upper_landing = staircase_fork("계단 끝까지 올라가 직접 확인한다", 14, "Upstairs")
 lower_landing = staircase_fork("현재 통로와 안내도를 대조해 돌아간다", 15, "Downstairs")
 assert upper_landing != lower_landing, "Both stair exits showed the same destination"
+
+resume_at({"act": 2, "branch": 1, "step": 0, "page": "intro", "flags": {}, "log": []})
+find("대합실")
+capture("HallScale")
