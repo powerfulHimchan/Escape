@@ -402,7 +402,9 @@ public final class MainActivity extends Activity {
         int step = game.step();
         boolean timedShutter = start && choice && step == 1;
         boolean timed = choice && game.beat().optInt("seconds") > 0;
-        if (timed) closeUp = true;
+        boolean trainThreshold = choice && (route.equals("train") && step==11
+                || (route.equals("trainBoth") || route.equals("trainSolo")) && step==8);
+        if (timed || trainThreshold) closeUp = true;
         int panel = -1;
         if (start && !intro) {
             if (choice && step == 0) panel = 0;
@@ -423,8 +425,9 @@ public final class MainActivity extends Activity {
         art.configure(scene, closeUp, nearby, rider, timedShutter && !game.has("radio"),
                 game.has("poweredLamp"), true);
         art.stage(start && intro, route.equals("train") && intro,
-                currentAct < 4 && scene == 0, timed, timedShutter, panel == 3 || scene == 2, panel);
-        art.arrivalView(game.state.optInt("departedView", -1));
+                currentAct < 4 && scene == 0, timed, timedShutter, panel == 3 || scene == 2, panel,
+                route.equals("trainBoth") || route.equals("dawn"));
+        if (!trainThreshold) art.arrivalView(game.state.optInt("departedView", -1));
         if (start && panel == 4 && !choice) art.enterKiosk(game.has("ran"));
         switch (game.page()) {
             case "intro":
