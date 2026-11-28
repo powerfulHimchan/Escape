@@ -434,7 +434,8 @@ public final class MainActivity extends Activity {
                 route.equals("trainBoth") || route.equals("dawn"));
         art.storyDetails(cup, cup && game.has("cupMeasured") && step<9,
                 cup && choice && step==2, farMinseo);
-        if (!trainThreshold && !cup && !farMinseo && linkView==null) art.arrivalView(game.state.optInt("departedView", -1));
+        boolean pickupScene=choice && art.pickups(Story.option(game.beat(),0),Story.option(game.beat(),1));
+        if (!pickupScene && !trainThreshold && !cup && !farMinseo && linkView==null) art.arrivalView(game.state.optInt("departedView", -1));
         if (start && panel == 4 && !choice) art.enterKiosk(game.has("ran"));
         switch (game.page()) {
             case "intro":
@@ -532,6 +533,7 @@ public final class MainActivity extends Activity {
         moving = true;
         JSONObject option = index < 0 ? null : Story.option(game.beat(), index);
         String motion = game.select(index, art.viewId());
+        art.choosePickup(index);
         art.play(motion, option == null ? "hold" : option.optString("minseoMotion", "hold"),
                 option == null ? "hold" : option.optString("jianMotion", "hold"));
         if (index < 0) art.countdown(0, Math.max(1, clockDuration), false);
