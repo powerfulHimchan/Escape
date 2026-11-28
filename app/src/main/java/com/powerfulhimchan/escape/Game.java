@@ -217,6 +217,7 @@ final class Game {
         }
 
         motion = option == null ? (currentAct == 1 ? "backstep" : "hold") : option.optString("motion", motion);
+        if (index==0 && "supply".equals(beat.optString("mode")) && has("radio")) motion="loadRadio";
         boolean moved = StationArt.travels(motion) || view == 29 && motion.equals("pick")
                 || view == 13 && motion.equals("pick");
         if (moved) put(state, "departedView", view);

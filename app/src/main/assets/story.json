@@ -34,7 +34,15 @@
               "label": "카운터로 돌아서 무전기를 챙긴다",
               "after": "무전기를 쥐는 순간 셔터가 바닥에 닿았다. 도윤은 카운터 옆 비탈 통로를 뛰어올랐다.",
               "effect": "radio,pick",
-              "motion": "pick"
+              "motion": "pick",
+              "pickup": {
+                "item": "radio",
+                "x": 389,
+                "y": 124,
+                "footX": 365,
+                "footY": 191,
+                "surface": ""
+              }
             },
             {
               "label": "지금 셔터 아래로 달린다",
@@ -56,7 +64,15 @@
               "label": "왼쪽으로 빠지며 안내도를 줍는다",
               "after": "종이를 펼치자 접힌 안쪽에 누군가 그린 화살표가 보였다.",
               "effect": "map,pick",
-              "motion": "pick"
+              "motion": "pick",
+              "pickup": {
+                "item": "map",
+                "x": 120,
+                "y": 217,
+                "footX": 0,
+                "footY": 0,
+                "surface": "floor"
+              }
             },
             {
               "label": "오른쪽 방향표를 따라 빠져나간다",
@@ -94,13 +110,21 @@
               "label": "건전지를 챙겨 둔다",
               "after": "도윤은 새 건전지를 주머니에 넣었다. 안내판은 어두운 채였다.",
               "effect": "battery,pick",
-              "motion": "pick"
+              "motion": "pick",
+              "pickup": {
+                "item": "battery",
+                "x": 155,
+                "y": 155,
+                "footX": 177,
+                "footY": 210,
+                "surface": ""
+              }
             },
             {
               "label": "안내판에 넣어 숨은 통로를 확인한다",
               "after": "접점이 닿자 벽 뒤 계단이 그려진 선이 떠올랐다. 덮개가 잠기기 전에 도윤은 꺾이는 지점을 메모했다.",
               "effect": "mark,proofPlace",
-              "motion": "reach"
+              "motion": "insert"
             }
           ],
           "setting": 1,
@@ -193,7 +217,7 @@
               "label": "녹음 회로를 재생해 시작 시각을 적는다",
               "after": "첫 방송이 나온 시각과 출구가 열리는 시각 사이에 간격이 있다.",
               "effect": "clock",
-              "motion": "reach"
+              "motion": "write"
             }
           ],
           "setting": 2
@@ -206,7 +230,15 @@
               "label": "안내도를 들고 간다",
               "after": "등이 꺼졌다. 눈을 뜨니 막차에서 내렸던 승강장 기둥 앞이었다. 안주머니에 손을 넣자 방금 접어 넣은 안내도의 모서리가 잡혔다.",
               "effect": "map,pick",
-              "motion": "pick"
+              "motion": "pick",
+              "pickup": {
+                "item": "map",
+                "x": 196,
+                "y": 193,
+                "footX": 225,
+                "footY": 247,
+                "surface": ""
+              }
             },
             {
               "label": "출구 표시등을 지켜본다",
@@ -227,7 +259,7 @@
               "label": "수위를 찍고 물을 조금 덜어 둔다",
               "after": "도윤은 컵과 손잡이가 함께 나오게 사진을 찍었다. 물을 받침에 조금 따르자 수면이 손잡이 아래로 내려갔다.",
               "effect": "loop,cupMeasured",
-              "motion": "reach"
+              "motion": "cup"
             },
             {
               "label": "컵을 두고 문밖의 호출 위치를 확인한다",
@@ -246,7 +278,15 @@
               "label": "쓸 만한 비품을 확인한다",
               "after": "봉투 안쪽에서 작은 건전지 하나를 찾는다.",
               "effect": "battery,pick",
-              "motion": "pick"
+              "motion": "pick",
+              "pickup": {
+                "item": "battery",
+                "x": 211,
+                "y": 210,
+                "footX": 0,
+                "footY": 0,
+                "surface": "low"
+              }
             },
             {
               "label": "열쇠표 뒤쪽을 읽는다",
@@ -265,13 +305,29 @@
               "label": "건전지를 챙긴다",
               "after": "도윤은 새지 않은 건전지를 주머니에 넣었다.",
               "effect": "battery,pick",
-              "motion": "pick"
+              "motion": "pick",
+              "pickup": {
+                "item": "battery",
+                "x": 325,
+                "y": 133,
+                "footX": 294,
+                "footY": 195,
+                "surface": "bin"
+              }
             },
             {
               "label": "안내도를 챙긴다",
               "after": "종이에 그어진 연필 선이 비쳤다.",
               "effect": "map,pick",
-              "motion": "pick"
+              "motion": "pick",
+              "pickup": {
+                "item": "map",
+                "x": 346,
+                "y": 132,
+                "footX": 322,
+                "footY": 195,
+                "surface": "bin"
+              }
             }
           ],
           "setting": 2
@@ -284,13 +340,13 @@
               "label": "표찰 한 칸에 위치를 그린다",
               "after": "도윤은 지금 서 있는 곳과 승강장 사이의 모퉁이를 그린 뒤 표찰을 주머니에 넣었다.",
               "effect": "proofPlace,mark,tagSketch",
-              "motion": "reach"
+              "motion": "sketch"
             },
             {
               "label": "표찰 한 칸에 정차 시각을 쓴다",
               "after": "도윤은 막차가 멈춘 시각 00:11을 또박또박 쓰고 표찰을 주머니에 넣었다.",
               "effect": "proofTime,clock,tagTime",
-              "motion": "reach"
+              "motion": "writeTime"
             }
           ],
           "setting": 2
@@ -303,7 +359,15 @@
               "label": "손전등을 챙긴다",
               "after": "스위치를 밀어도 불이 켜지지 않았다. 몸통을 돌리자 빈 건전지 칸이 보였다.",
               "effect": "lamp,pick",
-              "motion": "pick"
+              "motion": "pick",
+              "pickup": {
+                "item": "lamp",
+                "x": 188,
+                "y": 191,
+                "footX": 221,
+                "footY": 248,
+                "surface": ""
+              }
             },
             {
               "label": "지나간 사람의 방향을 확인한다",
@@ -327,7 +391,8 @@
             {
               "label": "삼각형을 휴대폰에 그려 둔다",
               "after": "같은 모양이 다른 곳에도 있으면 알아볼 수 있다.",
-              "effect": "mark"
+              "effect": "mark",
+              "motion": "phoneSketch"
             }
           ],
           "setting": 2
@@ -431,7 +496,15 @@
               "label": "안내도를 먼저 챙긴다",
               "after": "도윤은 안내도를 접어 가방에 넣었다. 불이 꺼졌다 켜지자 처음 내린 승강장이었다. 지퍼를 열자 접힌 안내도가 그대로 들어 있었다.",
               "effect": "map,pick",
-              "motion": "pick"
+              "motion": "pick",
+              "pickup": {
+                "item": "map",
+                "x": 393,
+                "y": 153,
+                "footX": 365,
+                "footY": 214,
+                "surface": "bin"
+              }
             },
             {
               "label": "표시등과 시계를 본다",
@@ -470,13 +543,29 @@
               "label": "건전지를 꺼낸다",
               "after": "작은 무전기와 손전등에 들어가는 크기다.",
               "effect": "battery,pick",
-              "motion": "pick"
+              "motion": "pick",
+              "pickup": {
+                "item": "battery",
+                "x": 137,
+                "y": 145,
+                "footX": 159,
+                "footY": 182,
+                "surface": "bin"
+              }
             },
             {
               "label": "손전등을 꺼낸다",
               "after": "스위치를 밀어보니 전원이 들어오지 않는다.",
               "effect": "lamp,pick",
-              "motion": "pick"
+              "motion": "pick",
+              "pickup": {
+                "item": "lamp",
+                "x": 153,
+                "y": 144,
+                "footX": 174,
+                "footY": 183,
+                "surface": "bin"
+              }
             }
           ],
           "setting": 3
@@ -488,7 +577,8 @@
             {
               "label": "옛 번호를 메모한다",
               "after": "옛 표지판을 찾으면 비교할 수 있다.",
-              "effect": "oldMap"
+              "effect": "oldMap",
+              "motion": "write"
             },
             {
               "label": "새 번호를 기억한다",
@@ -507,13 +597,13 @@
               "label": "표찰 한 칸에 위치를 그린다",
               "after": "도윤은 지금 서 있는 곳과 승강장 사이의 모퉁이를 그린 뒤 표찰을 주머니에 넣었다.",
               "effect": "proofPlace,mark,tagSketch",
-              "motion": "reach"
+              "motion": "sketch"
             },
             {
               "label": "표찰 한 칸에 정차 시각을 쓴다",
               "after": "도윤은 막차가 멈춘 시각 00:11을 또박또박 쓰고 표찰을 주머니에 넣었다.",
               "effect": "proofTime,clock,tagTime",
-              "motion": "reach"
+              "motion": "writeTime"
             }
           ],
           "setting": 3
@@ -532,7 +622,7 @@
               "label": "되돌아가는 방향을 적어둔다",
               "after": "도윤은 휴대폰에 ‘돌아올 때는 유리 칸막이를 오른쪽에 둔다’고 적었다. 화면에서 눈을 떼자 표지등이 꺼졌다.",
               "effect": "junction",
-              "motion": "hold"
+              "motion": "phoneNote"
             }
           ],
           "setting": 3
@@ -708,7 +798,7 @@
               "label": "벽 번호와 온 길을 대조한다",
               "after": "뒤돌아보니 방금 돈 모퉁이에서 번호 하나가 바뀌어 있었다. 도윤은 그 경계를 기억했다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "inspect"
             },
             {
               "label": "다음 점멸까지 초를 센다",
@@ -873,7 +963,15 @@
               "label": "안내도부터 접어 갖고 간다",
               "after": "새 반복에서 접힌 안내도가 그대로 남는다.",
               "effect": "map,pick",
-              "motion": "pick"
+              "motion": "pick",
+              "pickup": {
+                "item": "map",
+                "x": 347,
+                "y": 138,
+                "footX": 321,
+                "footY": 183,
+                "surface": ""
+              }
             },
             {
               "label": "정차 시각을 마지막까지 본다",
@@ -918,7 +1016,7 @@
               "label": "방송의 순서를 적는다",
               "after": "어떤 방송이 먼저였는지 다른 기록과 대조할 수 있다.",
               "effect": "live",
-              "motion": "reach"
+              "motion": "write"
             }
           ],
           "setting": 11
@@ -931,7 +1029,7 @@
               "label": "벽 번호와 온 길을 대조한다",
               "after": "뒤돌아보니 방금 돈 모퉁이에서 번호 하나가 바뀌어 있었다. 도윤은 그 경계를 기억했다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "inspect"
             },
             {
               "label": "다음 점멸까지 초를 센다",
@@ -986,13 +1084,13 @@
               "label": "다음 승객을 도울 수 있게 적는다",
               "after": "초보 승객이 읽을 수 있는 문장부터 짧게 옮긴다.",
               "effect": "broadcast",
-              "motion": "reach"
+              "motion": "write"
             },
             {
               "label": "밖에서 확인할 수 있는 장소를 적는다",
               "after": "역 이름 대신 바깥 정류장을 단서로 남긴다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "write"
             }
           ],
           "setting": 10
@@ -1077,7 +1175,7 @@
               "label": "안내도에 삼각형을 더 그린다",
               "after": "다음 반복에서도 같은 갈림길을 확인할 수 있다.",
               "effect": "map,mark",
-              "motion": "reach"
+              "motion": "triangle"
             },
             {
               "label": "어디에서 기다릴지 직접 본다",
@@ -1141,7 +1239,15 @@
               "label": "비품 선반을 열어본다",
               "after": "선반 가장자리의 손전등을 꺼내 가방에 넣는다.",
               "effect": "lamp,pick",
-              "motion": "pick"
+              "motion": "pick",
+              "pickup": {
+                "item": "lamp",
+                "x": 139,
+                "y": 150,
+                "footX": 158,
+                "footY": 208,
+                "surface": "bin"
+              }
             }
           ],
           "setting": 5
@@ -1154,7 +1260,7 @@
               "label": "벽 번호와 온 길을 대조한다",
               "after": "뒤돌아보니 방금 돈 모퉁이에서 번호 하나가 바뀌어 있었다. 도윤은 그 경계를 기억했다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "inspect"
             },
             {
               "label": "다음 점멸까지 초를 센다",
@@ -1197,7 +1303,8 @@
             {
               "label": "같은 방송이 울린 시각을 기록한다",
               "after": "민서가 종이 아래에 비교할 숫자를 써준다.",
-              "effect": "proofTime"
+              "effect": "proofTime",
+              "motion": "write"
             }
           ],
           "setting": 4
@@ -1355,7 +1462,15 @@
               "label": "남은 건전지를 살핀다",
               "after": "포장 아래에 마지막 건전지 하나가 들어 있다.",
               "effect": "battery,pick",
-              "motion": "pick"
+              "motion": "pick",
+              "pickup": {
+                "item": "battery",
+                "x": 112,
+                "y": 155,
+                "footX": 137,
+                "footY": 196,
+                "surface": "bin"
+              }
             },
             {
               "label": "출구 표시를 안내도에 옮긴다",
@@ -1373,7 +1488,7 @@
               "label": "벽 번호와 온 길을 대조한다",
               "after": "뒤돌아보니 방금 돈 모퉁이에서 번호 하나가 바뀌어 있었다. 도윤은 그 경계를 기억했다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "inspect"
             },
             {
               "label": "다음 점멸까지 초를 센다",
@@ -1527,7 +1642,7 @@
               "label": "유리 칸을 두드린다",
               "after": "민서는 고개를 들고 손가락으로 셋을 센다.",
               "effect": "signal",
-              "motion": "reach"
+              "motion": "knock"
             }
           ],
           "setting": 4
@@ -1578,7 +1693,7 @@
               "label": "나중에 남는 길을 적는다",
               "after": "출구를 놓친 뒤에도 만나기 쉽다.",
               "effect": "map,mark",
-              "motion": "reach"
+              "motion": "write"
             },
             {
               "label": "가장 빠른 쪽을 시험한다",
@@ -1615,7 +1730,7 @@
               "label": "바닥 방향표가 가리키는 길을 확인한다",
               "after": "도윤은 방향표의 끝을 짚었다. 어둠 속에서도 돌아갈 쪽을 찾을 수 있었다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "inspect"
             },
             {
               "label": "안내등이 꺼지는 시각을 확인한다",
@@ -1855,7 +1970,7 @@
               "label": "바닥 방향표가 가리키는 길을 확인한다",
               "after": "도윤은 방향표의 끝을 짚었다. 어둠 속에서도 돌아갈 쪽을 찾을 수 있었다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "inspect"
             },
             {
               "label": "안내등이 꺼지는 시각을 확인한다",
@@ -2016,7 +2131,8 @@
             {
               "label": "문에 뜬 시각을 적는다",
               "after": "민서가 적은 줄 아래에 도윤이 본 숫자를 더한다.",
-              "effect": "proofTime"
+              "effect": "proofTime",
+              "motion": "write"
             },
             {
               "label": "마지막 기둥의 위치를 확인한다",
@@ -2036,13 +2152,14 @@
             {
               "label": "직접 본 부분을 따로 표시한다",
               "after": "각자 어떤 정보를 직접 봤는지 나뉜다.",
-              "effect": "bundle"
+              "effect": "bundle",
+              "motion": "write"
             },
             {
               "label": "어디서 다시 확인할지 적는다",
               "after": "지상 정류장과 열차의 정차 구간을 연결할 수 있다.",
               "effect": "proofPlace,mark",
-              "motion": "reach"
+              "motion": "write"
             }
           ],
           "setting": 10
@@ -2054,12 +2171,14 @@
             {
               "label": "정류장 특징을 그림으로 남긴다",
               "after": "밖에서 누군가 같은 기둥을 찾아볼 수 있다.",
-              "effect": "proofPlace,map"
+              "effect": "proofPlace,map",
+              "motion": "sketch"
             },
             {
               "label": "방송 문장을 한 줄 남긴다",
               "after": "정차 시각만으로 부족할 때 비교할 수 있는 말이다.",
-              "effect": "live,proofTime"
+              "effect": "live,proofTime",
+              "motion": "write"
             }
           ],
           "setting": 7
@@ -2090,7 +2209,7 @@
               "label": "바닥 방향표가 가리키는 길을 확인한다",
               "after": "도윤은 방향표의 끝을 짚었다. 어둠 속에서도 돌아갈 쪽을 찾을 수 있었다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "inspect"
             },
             {
               "label": "안내등이 꺼지는 시각을 확인한다",
@@ -2115,7 +2234,7 @@
               "label": "젖지 않게 한 묶음으로 넣는다",
               "after": "두 자료를 한 집게로 고정한다.",
               "effect": "bundle",
-              "motion": "reach"
+              "motion": "file"
             }
           ],
           "setting": 10
@@ -2331,7 +2450,7 @@
               "label": "바닥 방향표가 가리키는 길을 확인한다",
               "after": "도윤은 방향표의 끝을 짚었다. 어둠 속에서도 돌아갈 쪽을 찾을 수 있었다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "inspect"
             },
             {
               "label": "안내등이 꺼지는 시각을 확인한다",
@@ -2520,7 +2639,8 @@
             {
               "label": "새 지점을 기록한다",
               "after": "민서에게 도착 전에 전할 방법이 필요하다.",
-              "effect": "change,mark"
+              "effect": "change,mark",
+              "motion": "write"
             }
           ],
           "setting": 4
@@ -2570,7 +2690,7 @@
               "label": "바닥 방향표가 가리키는 길을 확인한다",
               "after": "도윤은 방향표의 끝을 짚었다. 어둠 속에서도 돌아갈 쪽을 찾을 수 있었다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "inspect"
             },
             {
               "label": "안내등이 꺼지는 시각을 확인한다",
@@ -2753,7 +2873,15 @@
               "label": "손전등을 준비한다",
               "after": "가져온 전원이 있다면 어두울 때 바로 쓸 수 있다.",
               "effect": "lamp,pick",
-              "motion": "pick"
+              "motion": "pick",
+              "pickup": {
+                "item": "lamp",
+                "x": 133,
+                "y": 151,
+                "footX": 155,
+                "footY": 210,
+                "surface": "bin"
+              }
             },
             {
               "label": "표식을 순서대로 확인한다",
@@ -2772,7 +2900,7 @@
               "label": "목소리 대신 두 번 두드리기로 한다",
               "after": "소리가 울려도 정해둔 수를 구분할 수 있다.",
               "effect": "signal,promise",
-              "motion": "reach"
+              "motion": "knock"
             },
             {
               "label": "끝에 닿으면 바로 알리기로 한다",
@@ -2808,7 +2936,7 @@
               "label": "바닥 방향표가 가리키는 길을 확인한다",
               "after": "도윤은 방향표의 끝을 짚었다. 어둠 속에서도 돌아갈 쪽을 찾을 수 있었다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "inspect"
             },
             {
               "label": "안내등이 꺼지는 시각을 확인한다",
@@ -2954,7 +3082,7 @@
               "label": "버스가 지난 시각을 적는다",
               "after": "밖의 시각과 역 시각을 한 줄에 함께 둘 수 있다.",
               "effect": "proofTime",
-              "motion": "reach"
+              "motion": "write"
             },
             {
               "label": "광고판의 모양을 확인한다",
@@ -3010,7 +3138,15 @@
               "label": "무전기를 확보한다",
               "after": "가방에 넣을 수 있는 무전기를 가져온다.",
               "effect": "radio,pick",
-              "motion": "pick"
+              "motion": "pick",
+              "pickup": {
+                "item": "radio",
+                "x": 110,
+                "y": 157,
+                "footX": 134,
+                "footY": 199,
+                "surface": "bin"
+              }
             },
             {
               "label": "바깥에서 기다려 볼 지점을 정한다",
@@ -3046,7 +3182,7 @@
               "label": "바닥 방향표가 가리키는 길을 확인한다",
               "after": "도윤은 방향표의 끝을 짚었다. 어둠 속에서도 돌아갈 쪽을 찾을 수 있었다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "inspect"
             },
             {
               "label": "안내등이 꺼지는 시각을 확인한다",
@@ -3231,7 +3367,7 @@
               "label": "현재 갈림길을 다시 그린다",
               "after": "굵은 옛 선 옆에 지금 지나온 길을 남긴다.",
               "effect": "map,mark",
-              "motion": "reach"
+              "motion": "sketch"
             },
             {
               "label": "벽의 화살표를 따라가 본다",
@@ -3287,7 +3423,7 @@
               "label": "바닥 방향표가 가리키는 길을 확인한다",
               "after": "도윤은 방향표의 끝을 짚었다. 어둠 속에서도 돌아갈 쪽을 찾을 수 있었다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "inspect"
             },
             {
               "label": "안내등이 꺼지는 시각을 확인한다",
@@ -3548,7 +3684,7 @@
               "label": "다음 모퉁이까지 발로 거리를 잰다",
               "after": "도윤은 모퉁이까지 걸음을 세고 돌아왔다. 이제 불이 꺼져도 어디서 방향을 바꿀지 안다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "pace"
             },
             {
               "label": "제자리에서 경고음의 간격을 잰다",
@@ -3740,7 +3876,7 @@
               "label": "다음 모퉁이까지 발로 거리를 잰다",
               "after": "도윤은 모퉁이까지 걸음을 세고 돌아왔다. 이제 불이 꺼져도 어디서 방향을 바꿀지 안다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "pace"
             },
             {
               "label": "제자리에서 경고음의 간격을 잰다",
@@ -3935,7 +4071,7 @@
               "label": "다음 모퉁이까지 발로 거리를 잰다",
               "after": "도윤은 모퉁이까지 걸음을 세고 돌아왔다. 이제 불이 꺼져도 어디서 방향을 바꿀지 안다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "pace"
             },
             {
               "label": "제자리에서 경고음의 간격을 잰다",
@@ -4132,7 +4268,7 @@
               "label": "다음 모퉁이까지 발로 거리를 잰다",
               "after": "도윤은 모퉁이까지 걸음을 세고 돌아왔다. 이제 불이 꺼져도 어디서 방향을 바꿀지 안다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "pace"
             },
             {
               "label": "제자리에서 경고음의 간격을 잰다",
@@ -4211,7 +4347,7 @@
               "label": "민서가 직접 본 위치를 따로 적는다",
               "after": "두 사람의 설명이 어디에서 만나는지 표시한다.",
               "effect": "proofPlace,bundle",
-              "motion": "reach"
+              "motion": "write"
             },
             {
               "label": "도윤이 본 정차 시각을 밑줄 친다",
@@ -4249,7 +4385,7 @@
               "label": "두 자료를 가방에 같이 넣는다",
               "after": "지상에서 바로 나란히 펼칠 수 있다.",
               "effect": "bundle",
-              "motion": "reach"
+              "motion": "file"
             },
             {
               "label": "방송 장비 옆에 설명을 남긴다",
@@ -4322,7 +4458,7 @@
               "label": "다음 모퉁이까지 발로 거리를 잰다",
               "after": "도윤은 모퉁이까지 걸음을 세고 돌아왔다. 이제 불이 꺼져도 어디서 방향을 바꿀지 안다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "pace"
             },
             {
               "label": "제자리에서 경고음의 간격을 잰다",
@@ -4367,7 +4503,7 @@
               "after": "민서가 방송실 문을 열었다. 도윤은 어떤 열차가 멈추는지 첫 문장에 넣었다.",
               "effect": "finalRight,run",
               "motion": "signal",
-              "minseoMotion": "reach"
+              "minseoMotion": "push"
             }
           ],
           "setting": 7
@@ -4481,7 +4617,7 @@
               "label": "밖에서 건넬 자료를 가방에 넣는다",
               "after": "빠르게 나가도 잃어버리지 않도록 종이를 넣는다.",
               "effect": "bundle",
-              "motion": "reach"
+              "motion": "file"
             }
           ],
           "setting": 3
@@ -4513,7 +4649,7 @@
               "label": "다음 모퉁이까지 발로 거리를 잰다",
               "after": "도윤은 모퉁이까지 걸음을 세고 돌아왔다. 이제 불이 꺼져도 어디서 방향을 바꿀지 안다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "pace"
             },
             {
               "label": "제자리에서 경고음의 간격을 잰다",
@@ -4533,13 +4669,13 @@
               "label": "시각을 지우고 돌아올 길을 적는다",
               "after": "휴대폰 메모에 모퉁이와 돌아선 방향을 짧게 남겼다.",
               "effect": "mark",
-              "motion": "hold"
+              "motion": "phoneNote"
             },
             {
               "label": "시각만 또렷하게 고쳐 쓴다",
               "after": "두 사람이 떨어진 동안 무엇을 보았는지 설명할 숫자가 생겼다.",
               "effect": "clock",
-              "motion": "reach"
+              "motion": "write"
             }
           ],
           "setting": 7
@@ -4630,7 +4766,7 @@
               "label": "역 이름의 흔적을 찾는다",
               "after": "오래 전에 뗀 간판이 창을 천천히 지나간다.",
               "effect": "oldMap",
-              "motion": "reach"
+              "motion": "inspect"
             },
             {
               "label": "민서가 처음 내렸던 곳을 묻는다",
@@ -4703,7 +4839,7 @@
               "label": "노선등 아래에서 칸 번호를 읽는다",
               "after": "도윤은 문틀에 찍힌 칸 번호를 확인하고 자리로 돌아왔다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "inspect"
             },
             {
               "label": "스피커 아래서 안내음 간격을 잰다",
@@ -4819,13 +4955,14 @@
             {
               "label": "역 이름을 메모한다",
               "after": "다음 방송에 들려줄 수 있는 이름이 생겼다.",
-              "effect": "broadcast"
+              "effect": "broadcast",
+              "motion": "write"
             },
             {
               "label": "기억하기 쉬운 안내를 적는다",
               "after": "목소리와 방송이 시작한 잔향을 구분할 수 있다.",
               "effect": "live",
-              "motion": "reach"
+              "motion": "write"
             }
           ],
           "setting": 6
@@ -4894,7 +5031,7 @@
               "label": "노선등 아래에서 칸 번호를 읽는다",
               "after": "도윤은 문틀에 찍힌 칸 번호를 확인하고 자리로 돌아왔다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "inspect"
             },
             {
               "label": "스피커 아래서 안내음 간격을 잰다",
@@ -4914,13 +5051,13 @@
               "label": "시각을 지우고 돌아올 길을 적는다",
               "after": "휴대폰 메모에 모퉁이와 돌아선 방향을 짧게 남겼다.",
               "effect": "mark",
-              "motion": "hold"
+              "motion": "phoneNote"
             },
             {
               "label": "시각만 또렷하게 고쳐 쓴다",
               "after": "두 사람이 떨어진 동안 무엇을 보았는지 설명할 숫자가 생겼다.",
               "effect": "clock",
-              "motion": "reach"
+              "motion": "write"
             }
           ],
           "setting": 6
@@ -5085,7 +5222,7 @@
               "label": "다음 모퉁이까지 발로 거리를 잰다",
               "after": "도윤은 모퉁이까지 걸음을 세고 돌아왔다. 이제 불이 꺼져도 어디서 방향을 바꿀지 안다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "pace"
             },
             {
               "label": "제자리에서 경고음의 간격을 잰다",
@@ -5273,7 +5410,7 @@
               "label": "다음 모퉁이까지 발로 거리를 잰다",
               "after": "도윤은 모퉁이까지 걸음을 세고 돌아왔다. 이제 불이 꺼져도 어디서 방향을 바꿀지 안다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "pace"
             },
             {
               "label": "제자리에서 경고음의 간격을 잰다",
@@ -5293,13 +5430,13 @@
               "label": "시각을 지우고 돌아올 길을 적는다",
               "after": "휴대폰 메모에 모퉁이와 돌아선 방향을 짧게 남겼다.",
               "effect": "mark",
-              "motion": "hold"
+              "motion": "phoneNote"
             },
             {
               "label": "시각만 또렷하게 고쳐 쓴다",
               "after": "두 사람이 떨어진 동안 무엇을 보았는지 설명할 숫자가 생겼다.",
               "effect": "clock",
-              "motion": "reach"
+              "motion": "write"
             }
           ],
           "setting": 3
@@ -5463,7 +5600,7 @@
               "label": "다음 모퉁이까지 발로 거리를 잰다",
               "after": "도윤은 모퉁이까지 걸음을 세고 돌아왔다. 이제 불이 꺼져도 어디서 방향을 바꿀지 안다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "pace"
             },
             {
               "label": "제자리에서 경고음의 간격을 잰다",
@@ -5657,7 +5794,7 @@
               "label": "다음 모퉁이까지 발로 거리를 잰다",
               "after": "도윤은 모퉁이까지 걸음을 세고 돌아왔다. 이제 불이 꺼져도 어디서 방향을 바꿀지 안다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "pace"
             },
             {
               "label": "제자리에서 경고음의 간격을 잰다",
@@ -5848,7 +5985,7 @@
               "label": "다음 모퉁이까지 발로 거리를 잰다",
               "after": "도윤은 모퉁이까지 걸음을 세고 돌아왔다. 이제 불이 꺼져도 어디서 방향을 바꿀지 안다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "pace"
             },
             {
               "label": "제자리에서 경고음의 간격을 잰다",
@@ -5925,13 +6062,13 @@
               "label": "기둥과 정류장 위치를 연결해 그린다",
               "after": "바깥에서도 찾아갈 수 있는 표시가 생긴다.",
               "effect": "proofPlace,map",
-              "motion": "reach"
+              "motion": "sketch"
             },
             {
               "label": "연속해서 울린 안내 순서를 적는다",
               "after": "정차와 출구 사이 시간의 흐름을 남긴다.",
               "effect": "proofTime,live",
-              "motion": "reach"
+              "motion": "write"
             }
           ],
           "setting": 7
@@ -5964,13 +6101,13 @@
               "label": "시간과 위치를 한 줄에 적는다",
               "after": "어떤 열차의 어떤 자리인지 둘이 설명할 수 있을 것 같다.",
               "effect": "bundle",
-              "motion": "reach"
+              "motion": "write"
             },
             {
               "label": "확실한 메모만 따로 챙긴다",
               "after": "못 맞춘 단서는 빈 칸으로 남긴다.",
               "effect": "placeFragment",
-              "motion": "reach"
+              "motion": "file"
             }
           ],
           "setting": 7
@@ -6038,7 +6175,7 @@
               "label": "다음 모퉁이까지 발로 거리를 잰다",
               "after": "도윤은 모퉁이까지 걸음을 세고 돌아왔다. 이제 불이 꺼져도 어디서 방향을 바꿀지 안다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "pace"
             },
             {
               "label": "제자리에서 경고음의 간격을 잰다",
@@ -6226,7 +6363,7 @@
               "label": "다음 모퉁이까지 발로 거리를 잰다",
               "after": "도윤은 모퉁이까지 걸음을 세고 돌아왔다. 이제 불이 꺼져도 어디서 방향을 바꿀지 안다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "pace"
             },
             {
               "label": "제자리에서 경고음의 간격을 잰다",
@@ -6246,13 +6383,13 @@
               "label": "시각을 지우고 돌아올 길을 적는다",
               "after": "휴대폰 메모에 모퉁이와 돌아선 방향을 짧게 남겼다.",
               "effect": "mark",
-              "motion": "hold"
+              "motion": "phoneNote"
             },
             {
               "label": "시각만 또렷하게 고쳐 쓴다",
               "after": "두 사람이 떨어진 동안 무엇을 보았는지 설명할 숫자가 생겼다.",
               "effect": "clock",
-              "motion": "reach"
+              "motion": "write"
             }
           ],
           "setting": 8
@@ -6305,13 +6442,13 @@
               "label": "잘못된 표시 위에 새 길을 그린다",
               "after": "다음에 봐도 지우기 전과 구분할 수 있다.",
               "effect": "map,mark",
-              "motion": "reach"
+              "motion": "sketch"
             },
             {
               "label": "가장 뚜렷한 기둥 번호부터 쓴다",
               "after": "지도 없이 들은 사람도 같은 기둥을 찾을 수 있다.",
               "effect": "junction,broadcast",
-              "motion": "reach"
+              "motion": "write"
             }
           ],
           "setting": 8
@@ -6344,13 +6481,13 @@
               "label": "지상 쪽 돌아갈 선을 굵게 그린다",
               "after": "동선이 짧아져 둘이 같이 갈 수 있다.",
               "effect": "darkRoute,map",
-              "motion": "hold"
+              "motion": "sketch"
             },
             {
               "label": "새 승객용 안내를 한 줄 더 적는다",
               "after": "처음 보는 사람도 피해야 하는 계단이 적힌다.",
               "effect": "broadcast",
-              "motion": "reach"
+              "motion": "write"
             }
           ],
           "setting": 3
@@ -6418,7 +6555,7 @@
               "label": "다음 모퉁이까지 발로 거리를 잰다",
               "after": "도윤은 모퉁이까지 걸음을 세고 돌아왔다. 이제 불이 꺼져도 어디서 방향을 바꿀지 안다.",
               "effect": "proofPlace",
-              "motion": "reach"
+              "motion": "pace"
             },
             {
               "label": "제자리에서 경고음의 간격을 잰다",

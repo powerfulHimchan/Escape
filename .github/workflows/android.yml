@@ -32,8 +32,8 @@ jobs:
           javac -d "$RUNNER_TEMP/stage-check" "$stage/FloorPlan.java" "$stage/ShutterPass.java" tools/CheckStage.java
           java -cp "$RUNNER_TEMP/stage-check" com.powerfulhimchan.escape.CheckStage
           gradle --no-daemon :app:assembleDebug :app:lintDebug
-          cp app/build/outputs/apk/debug/app-debug.apk AfterLastTrain-0.6.0.apk
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose AfterLastTrain-0.6.0.apk
+          cp app/build/outputs/apk/debug/app-debug.apk AfterLastTrain-0.7.0.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose AfterLastTrain-0.7.0.apk
       - name: Enable emulator acceleration
         run: sudo chmod a+rw /dev/kvm
       - uses: ReactiveCircus/android-emulator-runner@v2
@@ -46,9 +46,9 @@ jobs:
           script: python3 tools/check_startup.py
       - uses: actions/upload-artifact@v4
         with:
-          name: AfterLastTrain-0.6.0
+          name: AfterLastTrain-0.7.0
           path: |
-            AfterLastTrain-0.6.0.apk
+            AfterLastTrain-0.7.0.apk
             Escape-*.png
           if-no-files-found: error
   publish:
@@ -60,15 +60,15 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: AfterLastTrain-0.6.0
+          name: AfterLastTrain-0.7.0
       - name: Publish APK
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           SHA: ${{ github.sha }}
         run: |
-          if gh release view v0.6.0 --repo "$REPO" >/dev/null 2>&1; then
-            gh release upload v0.6.0 AfterLastTrain-0.6.0.apk Escape-*.png --repo "$REPO" --clobber
+          if gh release view v0.7.0 --repo "$REPO" >/dev/null 2>&1; then
+            gh release upload v0.7.0 AfterLastTrain-0.7.0.apk Escape-*.png --repo "$REPO" --clobber
           else
-            gh release create v0.6.0 AfterLastTrain-0.6.0.apk Escape-*.png --repo "$REPO" --target "$SHA" --title '막차가 떠난 뒤 0.6.0' --notes '정전 후 승강장 복귀, 선택에 따른 단서·표찰과 엔딩 동행 인물, 셔터와 열차 장면 수정.'
+            gh release create v0.7.0 AfterLastTrain-0.7.0.apk Escape-*.png --repo "$REPO" --target "$SHA" --title '막차가 떠난 뒤 0.7.0' --notes '물건 높이에 맞춘 획득 연출과 선택별 그리기·필기·상호작용 동작.'
           fi

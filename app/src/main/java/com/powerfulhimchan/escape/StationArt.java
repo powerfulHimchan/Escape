@@ -10,6 +10,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.SystemClock;
 import android.view.View;
+import org.json.JSONObject;
 
 /** All actors, props and backgrounds use the same 512 x 256 stage. */
 final class StationArt extends View {
@@ -30,6 +31,18 @@ final class StationArt extends View {
             322,129,116,202,102,202,62,186);
     private final Path trainBay = polygon(33,101,267,6,325,31,325,135,115,215,33,194);
     private final Path beam = polygon(8,-30,94,-27,58,-5);
+    private final InteractionArt interactions=new InteractionArt();
+    private final InteractionArt.Pickup[] choices=new InteractionArt.Pickup[2];
+    private InteractionArt.Pickup selected;
+    boolean pickups(JSONObject first,JSONObject second) {
+        choices[0]=pickup(first); choices[1]=pickup(second);
+        return choices[0]!=null || choices[1]!=null;
+    }
+    private InteractionArt.Pickup pickup(JSONObject option) {
+        JSONObject data=option.optJSONObject("pickup");
+        return data==null?null:new InteractionArt.Pickup(data);
+    }
+    void choosePickup(int index) { selected=index<0?null:choices[index]; }
     private String action = "hold";
     private String minseoAction = "hold", jianAction = "hold";
     private int setting;
@@ -108,6 +121,7 @@ final class StationArt extends View {
         hero = showHero;
         entered = SystemClock.uptimeMillis();
         started = -1;
+        selected=choices[0]=choices[1]=null;
         enteringKiosk = false;
         officeCup=loweredCup=compareCup=acrossGlass=false;
         departing = arriving = emptyPlatform = atShutter = counterChoice = timedScene = callLight = false;
@@ -133,6 +147,7 @@ final class StationArt extends View {
 
     int actionDuration() {
         if (counterChoice) return 1750;
+        if (selected!=null) return 1650;
         return panel==10 || panel==3 && action.equals("runLeft") ? 1900 : ACTION_MS;
     }
 
@@ -274,7 +289,7 @@ final class StationArt extends View {
 
     private void fixtures(Canvas c, long now, float progress) {
         if (panel == 2) {
-            float glow = started >= 0 && action.equals("reach") ? ease((progress-.55f)/.25f) : 0;
+            float glow = started >= 0 && action.equals("insert") ? ease((progress-.78f)/.15f) : 0;
             c.save();
             c.clipPath(supplyMap);
             c.drawColor(((int)(195*(1-glow)) << 24) | 0x0013171b);
@@ -367,10 +382,11 @@ final class StationArt extends View {
             sprite(c,sheet,6,who,retreat?5-frame:frame,x,y,h,left);
             return;
         }
-        boolean reach=pose.equals("reach");
+        if (who==0 && interactions.gesture(c,cast,pose,x,y,h,left,cycle)) return;
+        boolean reach=pose.equals("pick");
         c.save();
         if (left) c.scale(-1,1,x,y);
-        if (reach || pose.equals("signal"))
+        if (reach || pose.equals("signal") || pose.equals("push"))
             c.rotate((float)Math.sin(unit(cycle)*Math.PI)*(reach?10:-6),x,y);
         sprite(c,reach?steps:cast,3,reach?2:0,who,x,y,h,false);
         c.restore();
@@ -442,11 +458,55 @@ final class StationArt extends View {
         return mix(initial,1,interval(p,crossingGroup()?.82f:0,1));
     }
 
+    private static final float CONTACT=.62f;
+    private void looseItems(Canvas c,float pickupTime) {
+        for (InteractionArt.Pickup spot:choices) {
+            if (spot==null) continue;
+            if (spot.surface.equals("bin")) interactions.bin(c,spot);
+            if (spot!=selected || pickupTime<CONTACT) interactions.item(c,spot.item,spot.x,spot.y);
+        }
+    }
+
+    private void collect(Canvas c,float t) {
+        InteractionArt.Pickup spot=selected;
+        FloorPlan floor=currentFloor();
+        boolean low=spot.low();
+        // Solve for the feet using the fingertip in the crouching sprite.
+        float footY=low?(spot.y+59f/256*(floor.standingHeight-floor.y*floor.depthScale))
+                /(1-59f/256*floor.depthScale):spot.feetY;
+        float height=floor.heightAt(footY);
+        boolean left=low || spot.x<spot.feetX;
+        float footX=low?spot.x+88f/256*height:spot.feetX;
+        float along=interval(t,0,.36f);
+        float x=mix(floor.x,footX,along), y=mix(floor.y,footY,along);
+        if (t<.36f) {
+            person(c,0,x,y,floor.heightAt(y),"walk",along*1.5f,footX<floor.x);
+            return;
+        }
+        if (panel==4 && t>.90f) {
+            float exit=interval(t,.90f,1);
+            x=mix(x,floor.first.endX,exit); y=mix(y,floor.first.endY,exit);
+            person(c,0,x,y,floor.heightAt(y),"awayLeft",exit,true); return;
+        }
+        float reach=interval(t,.36f,CONTACT)*(1-interval(t,CONTACT,.9f));
+        float restX=x+(left?1:-1)*height*.105f,restY=y-height*.3125f;
+        float handX=mix(restX,spot.x,reach),handY=mix(restY,spot.y,reach);
+        shadow(c,x,y,height);
+        if (low && reach>.01f) {
+            float crouchH=height*(.78f+.22f*reach);
+            sprite(c,steps,3,2,0,x,y,crouchH,left);
+            handX=x-88f/256*crouchH; handY=y-59f/256*crouchH;
+        } else if(low) sprite(c,cast,3,0,0,x,y,height,left);
+        else interactions.stand(c,cast,x,y,height,left,handX,handY);
+        if (t>=CONTACT && t<.9f) interactions.item(c,spot.item,handX,handY);
+        if (action.equals("loadRadio") && t>=CONTACT) interactions.item(c,"radio",restX,restY+4);
+    }
+
     private void counterSequence(Canvas c,float p,boolean acting) {
         FloorPlan floor=currentFloor();
         float x=floor.x,y=floor.y;
         boolean running=acting && action.startsWith("run");
-        boolean pickup=acting && action.equals("pick");
+        boolean pickup=acting && selected!=null;
         float from=(acting?closedAtChoice:closed)*LAST_OPEN_DROP;
         float drop=from;
         int duck=-1;
@@ -463,23 +523,21 @@ final class StationArt extends View {
             drop=ShutterPass.drop(closedAtChoice,y);
         } else if (acting) {
             drop=mix(from,1,interval(p,0,.51f));
-            float approach=interval(p,0,.41f);
             float toRamp=interval(p,pickup?.54f:0,pickup?.81f:.69f);
             float inside=interval(p,pickup?.81f:.69f,1);
-            float counterX=pickup?mix(x,388,approach):x;
-            float counterY=pickup?mix(y,187,approach):y;
+            float counterX=pickup?selected.feetX:x;
+            float counterY=pickup?selected.feetY:y;
             x=mix(mix(counterX,478,toRamp),459,inside);
             y=mix(mix(counterY,192,toRamp),137,inside);
-            boolean reaching=pickup && p>=.37f && p<.54f;
-            pose=reaching?"reach":inside>0?"awayRight":"runRight";
-            cycle=reaching?unit((p-.37f)/.17f):(pickup?approach:0)+2*toRamp+inside;
+            pose=inside>0?"awayRight":"runRight";
+            cycle=2*toRamp+inside;
             left=inside>0;
         }
         shutter(c,drop);
-        if (!radio || pickup && p>=.49f) {
-            // Replace the radio on the painted counter with the adjacent empty ledge.
-            bitmap(c,counterHall,559,170,14,31,384,113,10,21);
-        }
+        bitmap(c,counterHall,559,170,14,31,384,113,10,21);
+        float collectTime=pickup?unit(p/.54f):0;
+        if (radio) looseItems(c,collectTime);
+        if (pickup && p<=.54f) { collect(c,collectTime); return; }
         boolean behind=running && y<SHUTTER_SILL-9;
         c.save();
         if (behind) c.clipRect(40,SHUTTER_TOP,249,SHUTTER_SILL);
@@ -502,7 +560,14 @@ final class StationArt extends View {
         c.scale(getWidth()/512f,getHeight()/256f);
         room(c);
         fixtures(c, now, p);
-        if (officeCup) drawOfficeCup(c,loweredCup || compareCup && acting && action.equals("reach") && p>.72f);
+        if (!counterChoice) {
+            if (panel==4 && choices[0]!=null) {
+                // Restore bare tile beneath the folded map painted into the kiosk panel.
+                bitmap(c,landings,85,208,22,19,106,207,36,19);
+            }
+            looseItems(c,selected==null?0:p);
+        }
+        if (officeCup) drawOfficeCup(c,loweredCup || compareCup && acting && action.equals("cup") && p>.72f);
         if (acrossGlass) {
             c.save();
             c.clipPath(glass);
@@ -548,7 +613,7 @@ final class StationArt extends View {
         if(departing) {
             float step=ease(elapsed/780);
             x=219+22*step; y=148+31*step;
-            pose=elapsed<780?"walk":elapsed<1660?"reach":"hold"; walk=elapsed<780 ? step*1.25f : unit(elapsed/1660);
+            pose=elapsed<780?"walk":elapsed<1660?"inspect":"hold"; walk=elapsed<780 ? step*1.25f : unit(elapsed/1660);
         }
         if (enteringKiosk && !acting && elapsed<860) {
             float t=ease(elapsed/860);
@@ -593,11 +658,16 @@ final class StationArt extends View {
                 walk=t*(length1+length2)/(floor.standingHeight*(action.startsWith("run")?.92f:.75f));
                 if (stair!=0) walk=f;
                 if (action.equals("backstep")) left=!left;
-                if (fixture && p>.72f || panel==4 && action.equals("pick") && p>.85f) pose="reach";
+                if (fixture && p>=.74f) { pose=action; walk=unit((p-.74f)/.26f); }
                 else if (action.equals("backstep")) pose="backstep";
                 else if (action.startsWith("run")) pose=action;
                 else pose=by<ay-7?"awayRight":"walk";
-            } else if(action.equals("pick")) pose="reach";
+            } else if(action.equals("pace")) {
+                float out=p<.5f?2*p:2*(1-p);
+                x=mix(floor.x,floor.second.turnX,ease(out)*.42f);
+                y=mix(floor.y,floor.second.turnY,ease(out)*.42f);
+                left=(floor.second.turnX<floor.x)!=(p>=.5f); pose="walk"; walk=p*2.5f;
+            }
         }
         if (panel==0) {
             int lane=action.endsWith("Left")?0:1;
@@ -608,15 +678,16 @@ final class StationArt extends View {
             float t=ease(elapsed/680);
             x=mix(204,floor.x,t); y=mix(149,floor.y,t); pose="walk"; walk=t*1.4f;
         }
-        if (compareCup && acting && action.equals("reach")) {
+        if (compareCup && acting && action.equals("cup")) {
             float t=interval(p,0,.62f);
             x=mix(floor.x,119,t); y=mix(floor.y,203,t); left=true;
-            pose=p<.62f?"walk":"reach"; walk=p<.62f?1.5f*t:unit((p-.62f)/.38f);
+            pose=p<.62f?"walk":"cup"; walk=p<.62f?1.5f*t:unit((p-.62f)/.38f);
         }
         if(minseo && !acrossGlass) companion(c,1,setting==5?172:309,acting,minseoAction,travelTime);
         if(jian) companion(c,2,164,acting,jianAction,travelTime);
         if(lamp && setting==5){c.save();c.translate(x,y);paint.setColor(0x58ffe1a1);c.drawPath(beam,paint);c.restore();}
-        if (hero) {
+        if (hero && selected!=null && acting) collect(c,p);
+        else if (hero) {
             float h=floor.heightAt(y);
             if (stair == 0) person(c,0,x,y,h,pose,walk,left);
             else stairPerson(c,x,y,h,walk,stair,left);

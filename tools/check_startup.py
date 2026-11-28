@@ -104,7 +104,7 @@ def reach_shutter(right_path=False, inspect_train=False):
     return upper
 
 
-adb("install", "-r", "AfterLastTrain-0.6.0.apk")
+adb("install", "-r", "AfterLastTrain-0.7.0.apk")
 upper = reach_shutter(inspect_train=True)
 time.sleep(.35)
 capture("Shutter")
@@ -214,6 +214,23 @@ passage = visible_text()
 assert "사진 속 손잡이" in passage, passage
 at(2, 0, 9)
 assert "사진 속 손잡이" not in visible_text()
+
+# Both tag actions must record their own choice and remain reachable on the same save.
+def action_frame(act, branch, step, label, name, delay, button=None):
+    at(act, branch, step)
+    if button is None:
+        x1,y1,x2,y2 = find(label)
+        button = (str((x1+x2)//2), str((y1+y2)//2))
+    adb("shell", "input", "tap", *button)
+    time.sleep(delay)
+    capture(name)
+    chosen = await_state(lambda state: state["step"] == step+1)
+    assert chosen["log"][-1]["label"] == label, chosen
+
+action_frame(2,0,5,"표찰 한 칸에 위치를 그린다","TagSketch",.67)
+action_frame(2,0,5,"표찰 한 칸에 정차 시각을 쓴다","TagTime",.67)
+action_frame(1,0,2,"왼쪽으로 빠지며 안내도를 줍는다","FloorMap",1.01)
+action_frame(2,0,1,"안내도를 들고 간다","DeskMap",1.01,upper)
 
 # Read a 0.5 save with only its original choice label to recover the surviving note.
 at(3, 0, 4, log=[{"act": 2, "label": "표찰 한 칸에 정차 시각을 쓴다"}])
