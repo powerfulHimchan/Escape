@@ -12,11 +12,22 @@ def adb(*args):
     return subprocess.check_output(["adb", *args])
 
 
+def ui_tree():
+    deadline = time.monotonic() + 20
+    while time.monotonic() < deadline:
+        adb("shell", "rm", "-f", "/sdcard/escape.xml")
+        try:
+            adb("shell", "uiautomator", "dump", "/sdcard/escape.xml")
+            return ET.fromstring(adb("shell", "cat", "/sdcard/escape.xml"))
+        except (subprocess.CalledProcessError, ET.ParseError):
+            time.sleep(.4)
+    crash = adb("logcat", "-b", "crash", "-d", "-t", "80").decode(errors="replace")
+    raise AssertionError("No readable UI tree after 20 seconds. " + crash)
+
+
 def find(label):
     for _ in range(5):
-        adb("shell", "uiautomator", "dump", "/sdcard/escape.xml")
-        tree = ET.fromstring(adb("shell", "cat", "/sdcard/escape.xml"))
-        for node in tree.iter("node"):
+        for node in ui_tree().iter("node"):
             if label in (node.get("text"), node.get("content-desc")):
                 return tuple(map(int, re.findall(r"\d+", node.attrib["bounds"])))
         time.sleep(.4)
@@ -189,9 +200,7 @@ def at(act, branch, step, page="choice", flags=None, log=None):
 
 
 def visible_text():
-    adb("shell", "uiautomator", "dump", "/sdcard/escape.xml")
-    tree = ET.fromstring(adb("shell", "cat", "/sdcard/escape.xml"))
-    return " ".join(node.get("text", "") for node in tree.iter("node"))
+    return " ".join(node.get("text", "") for node in ui_tree().iter("node"))
 
 
 at(2, 0, 1)
